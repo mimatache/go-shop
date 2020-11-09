@@ -3,7 +3,7 @@ name: To Master
 on:
   push:
     branches: [ master ]
-  pull_requests: {}
+  pull_request: {}
 
 jobs:
   # Runs the linter
