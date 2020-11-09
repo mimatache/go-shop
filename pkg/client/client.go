@@ -73,6 +73,9 @@ func (s *ShopClient) AddToCart(prodId, qunatity uint) error {
 		return err
 	}
 	req, err := http.NewRequest(http.MethodPost, s.makeURL("cart/add"), bytes.NewBuffer(reqBody))
+	if err != nil {
+		return err
+	}
     req.Header.Set("Content-Type", "application/json")
 	response, err := s.client.Do(req)
 	if err != nil {
@@ -87,6 +90,9 @@ func (s *ShopClient) AddToCart(prodId, qunatity uint) error {
 
 func (s *ShopClient) Checkout() error {
 	req, err := http.NewRequest(http.MethodPost, s.makeURL("cart/checkout"), bytes.NewBuffer([]byte{}))
+	if err != nil {
+		return err
+	}
     req.Header.Set("Content-Type", "application/json")
 	response, err := s.client.Do(req)
 	if err != nil {
