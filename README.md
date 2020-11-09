@@ -1,2 +1,8 @@
 # go-shop
-A simple web shot API written in go
+A simple web shop API written in go
+
+
+**Things to do**
+- Testing - add unit tests
+- Comments - add more comments
+- Refactor - part of the code is more coupled than I would like
