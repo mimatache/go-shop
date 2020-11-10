@@ -6,27 +6,30 @@ import (
 
 	"github.com/hashicorp/go-memdb"
 
-	"github.com/mimatache/go-shop/internal/store"
 )
 
+//go:generate mockgen -source ./store.go -destination mocks/store.go
 type logger interface {
 	Infof(msg string, args ...interface{})
 	Debugf(msg string, args ...interface{})
 }
 
 var (
-	table = &userTable{name: "user"}
+	table = &UserTable{name: "user"}
 )
 
-type userTable struct {
+// UserTable returns the table for users
+type UserTable struct {
 	name string
 }
 
-func (u *userTable) GetName() string {
+// GetName returns the name of the table
+func (u *UserTable) GetName() string {
 	return u.name
 }
 
-func (u *userTable) GetTableSchema() *memdb.TableSchema {
+// GetTableSchema returns the table schema for users
+func (u *UserTable) GetTableSchema() *memdb.TableSchema {
 	return &memdb.TableSchema{
 		Name: u.name,
 		Indexes: map[string]*memdb.IndexSchema{
@@ -54,9 +57,19 @@ func (u *userTable) GetTableSchema() *memdb.TableSchema {
 	}
 }
 
-func New(log logger, seed io.Reader) (UserStore, error) {
-	schema := store.NewSchema()
+// UnderlyingStore represents the interface that the DB should implement to be usable
+type UnderlyingStore interface {
+	Read(table string, key string, value interface{}) (interface{}, error)
+	Write(table string, value ...interface{}) error
+}
 
+// GetTable returns the user table for the schema
+func GetTable() *UserTable {
+	return table
+}
+// New creates a new user DB instance
+func New(log logger,  seed io.Reader, db UnderlyingStore) (UserStore, error) {
+	
 	var users []*User
 
 	err := json.NewDecoder(seed).Decode(&users)
@@ -64,15 +77,9 @@ func New(log logger, seed io.Reader) (UserStore, error) {
 		return nil, err
 	}
 
-	schema.AddToSchema(table)
-
-	db, err := store.New(schema)
-	if err != nil {
-		return nil, err
-	}
-
+	
 	for _, user := range users {
-		err = db.Write(table, user)
+		err = db.Write(table.GetName(), user)
 		if err != nil {
 			return nil, err
 		}
@@ -84,86 +91,28 @@ func New(log logger, seed io.Reader) (UserStore, error) {
 	}, nil
 }
 
+// UserStore models the user DB
 type UserStore interface {
-	GetUserByName(name string) (*User, error)
-	GetUserByID(ID uint) (*User, error)
-	GetUserByEmail(email string) (*User, error)
+	// GetPasswordFor returns the password for the given user
 	GetPasswordFor(name string) (string, error)
 }
 
 type userStore struct {
-	db store.Store
+	db UnderlyingStore
 }
 
-func checkAndReturn(raw interface{}, err error) (*User, error) {
-	if err != nil {
-		return nil, err
-	}
-	return raw.(*User), nil
-}
-
-func (u *userStore) GetUserByName(name string) (*User, error) {
-	return checkAndReturn(u.db.Read(table, "name", name))
-}
-
-func (u *userStore) GetUserByEmail(email string) (*User, error) {
-	return checkAndReturn(u.db.Read(table, "email", email))
-}
-
-func (u *userStore) GetPasswordFor(name string) (string, error) {
-	user, err := u.GetUserByEmail(name)
+func (u *userStore) GetPasswordFor(email string) (string, error) {
+	user, err := checkAndReturn(u.db.Read(table.GetName(), "email", email))
 	if err != nil {
 		return "", err
 	}
 	return user.Password, nil
 }
 
-func (u *userStore) GetUserByID(ID uint) (*User, error) {
-	return checkAndReturn(u.db.Read(table, "id", ID))
-}
 
 type userLogger struct {
 	log   logger
 	store UserStore
-}
-
-func (u *userLogger) GetUserByName(name string) (*User, error) {
-	var err error
-	defer func() {
-		if err != nil {
-			u.log.Debugf("error occured when retrieving user %s", name)
-			return
-		}
-		u.log.Debugf("Retrieved user %s", name)
-	}()
-	user, err := u.store.GetUserByName(name)
-	return user, err
-}
-
-func (u *userLogger) GetUserByID(ID uint) (*User, error) {
-	var err error
-	defer func() {
-		if err != nil {
-			u.log.Debugf("error occured when retrieving user %d", ID)
-			return
-		}
-		u.log.Debugf("Retrieved user %d", ID)
-	}()
-	user, err := u.store.GetUserByID(ID)
-	return user, err
-}
-
-func (u *userLogger) GetUserByEmail(name string) (*User, error) {
-	var err error
-	defer func() {
-		if err != nil {
-			u.log.Debugf("error occured when retrieving user %s", name)
-			return
-		}
-		u.log.Debugf("Retrieved user %s", name)
-	}()
-	user, err := u.store.GetUserByEmail(name)
-	return user, err
 }
 
 func (u *userLogger) GetPasswordFor(name string) (string, error) {
@@ -179,4 +128,11 @@ func (u *userLogger) GetPasswordFor(name string) (string, error) {
 	}()
 	user, err := u.store.GetPasswordFor(name)
 	return user, err
+}
+
+func checkAndReturn(raw interface{}, err error) (*User, error) {
+	if err != nil {
+		return nil, err
+	}
+	return raw.(*User), nil
 }

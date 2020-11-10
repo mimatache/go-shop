@@ -6,48 +6,43 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/mimatache/go-shop/internal/http/authorization"
+	"github.com/mimatache/go-shop/internal/http/helpers"
 	"github.com/mimatache/go-shop/internal/http/middleware"
-	"github.com/mimatache/go-shop/internal/store"
-	userStore "github.com/mimatache/go-shop/pkg/users/store"
+	"github.com/mimatache/go-shop/pkg/users/authentication"
 )
 
-type Authentication interface {
-	AddRoutes(router *mux.Router)
+// AuthenticationAPI is used to authenticate users
+type AuthenticationAPI struct {
+	users userAuthentication
 }
 
-type userAuthentication struct {
-	store userStore.UserStore
+type userAuthentication interface {
+	IsValid(email, password string) error
 }
 
-func New(store userStore.UserStore) Authentication {
-	return &userAuthentication{store: store}
+// New creates a new AuthenticationApi
+func New(users userAuthentication) *AuthenticationAPI {
+	return &AuthenticationAPI{users: users}
 }
 
-func (u *userAuthentication) login() http.Handler {
+func (u *AuthenticationAPI) login() http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		username, providedPassword, ok := r.BasicAuth()
 		if !ok {
-			http.Error(w, "Not authorized", http.StatusUnauthorized)
+			helpers.FormatError(w, authentication.NewInvalidCredentials(username).Error(), http.StatusUnauthorized)
 			return
 		}
-		user, err := u.store.GetUserByEmail(username)
-		// checking error type to evaluate the status code to return
-		switch err.(type) {
-		case nil:
-			// continue with program execution
-		case store.NotFound:
-			http.Error(w, "Not authorized", http.StatusUnauthorized)
-			return
-		default:
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-		if providedPassword != user.Password {
-			http.Error(w, "Not authorized", http.StatusUnauthorized)
+		err := u.users.IsValid(username, providedPassword)
+		if err != nil{
+			if authentication.IsInvalidCredentialsError(err){
+				helpers.FormatError(w, err.Error(), http.StatusUnauthorized)
+				return
+			}
+			helpers.FormatError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		tokenString, expirationTime, err := authorization.GenerateJWTToken(user.Name, user.ID)
+		tokenString, expirationTime, err := authorization.GenerateJWTToken(username)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -61,7 +56,7 @@ func (u *userAuthentication) login() http.Handler {
 
 }
 
-func (u *userAuthentication) logout() http.Handler {
+func (u *AuthenticationAPI) logout() http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		token, err := authorization.GetAuthToken(r)
 		if err != nil {
@@ -78,7 +73,8 @@ func (u *userAuthentication) logout() http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-func (u *userAuthentication) AddRoutes(router *mux.Router) {
+// RegisterToRouter adds the API routes to the given router
+func (u *AuthenticationAPI) RegisterToRouter(router *mux.Router) {
 	router.Handle("/login", u.login()).Methods(http.MethodGet)
 	router.Handle("/logout", middleware.JWTAuthorization(u.logout())).Methods(http.MethodGet)
 }
