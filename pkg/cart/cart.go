@@ -1,33 +1,33 @@
 package cart
 
 import (
-	"net/http"
+	netHTTP "net/http"
 
 	"github.com/gorilla/mux"
 
 	"github.com/mimatache/go-shop/internal/logger"
 
-	cartHTTP "github.com/mimatache/go-shop/pkg/cart/http"
+	"github.com/mimatache/go-shop/pkg/cart/http"
 	"github.com/mimatache/go-shop/pkg/cart/store"
 )
 
-type API struct {
-	shoppingCart *cartHTTP.ShoppingCart
-}
-
-func NewAPI(logger logger.Logger, inventory cartHTTP.InventoryAPI, users cartHTTP.ClientAPI, payments cartHTTP.PaymentsAPI) (*API, error) {
-
-	cartStore, err := store.New(logger)
+// NewAPI instantiates a new cart API
+func NewAPI(
+	logger logger.Logger, 
+	inventory http.InventoryAPI,
+	users http.ClientAPI, 
+	payments http.PaymentsAPI, 
+	db store.UnderlyingStore,
+	router *mux.Router, 
+	handlers ...func(netHTTP.Handler) netHTTP.Handler,
+) error {
+	cartStore, err := store.New(logger, db)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	shoppingCart := cartHTTP.New(inventory, users, payments, cartStore)
+	shoppingCart := http.New(inventory, users, payments, cartStore)
+	shoppingCart.AddRoutes(router, handlers...)
 
-	return &API{
-		shoppingCart: shoppingCart,
-	}, nil
+	return nil
 }
 
-func (u *API) RegisterToRouter(router *mux.Router, handlers ...func(http.Handler) http.Handler) {
-	u.shoppingCart.AddRoutes(router, handlers...)
-}
