@@ -15,19 +15,34 @@ type logger interface {
 	Debugw(msg string, keysAndValues ...interface{})
 }
 
+// UnderlyingStore represents the interface that the DB should implement to be usable
+type UnderlyingStore interface {
+	Read(table string, key string, value interface{}) (interface{}, error)
+	WriteAfterExternalCondition(table string, objs ...interface{}) (store.ConditionMet, error)
+	Write(table string, value ...interface{}) error
+}
+
 var (
-	table = &productTable{name: "products"}
+	table = &ProductTable{name: "products"}
 )
 
-type productTable struct {
+// GetTable returns the product schema
+func GetTable () *ProductTable {
+	return table
+}
+
+// ProductTable represents the product table in the DB
+type ProductTable struct {
 	name string
 }
 
-func (u *productTable) GetName() string {
+// GetName return the name of the product table
+func (u *ProductTable) GetName() string {
 	return u.name
 }
 
-func (u *productTable) GetTableSchema() *memdb.TableSchema {
+// GetTableSchema returns the schema for the products table
+func (u *ProductTable) GetTableSchema() *memdb.TableSchema {
 	return &memdb.TableSchema{
 		Name: u.name,
 		Indexes: map[string]*memdb.IndexSchema{
@@ -55,8 +70,8 @@ func (u *productTable) GetTableSchema() *memdb.TableSchema {
 	}
 }
 
-func New(log logger, seed io.Reader) (ProductStore, error) {
-	schema := store.NewSchema()
+// New returns a new instance of ProductStore
+func New(log logger, db UnderlyingStore, seed io.Reader) (ProductStore, error) {
 
 	var products []*Product
 
@@ -65,15 +80,8 @@ func New(log logger, seed io.Reader) (ProductStore, error) {
 		return nil, err
 	}
 
-	schema.AddToSchema(table)
-
-	db, err := store.New(schema)
-	if err != nil {
-		return nil, err
-	}
-
 	for _, product := range products {
-		err = db.Write(table, product)
+		err = db.Write(table.GetName(), product)
 		if err != nil {
 			return nil, err
 		}
@@ -81,21 +89,23 @@ func New(log logger, seed io.Reader) (ProductStore, error) {
 
 	return &productLogger{
 		log:  log,
-		next: &productStore{db: db},
+		next: &productStore{
+			db: db,
+		},
 	}, nil
 }
 
 type ProductStore interface {
-	GetProductById(ID uint) (*Product, error)
+	GetProductByID(ID uint) (*Product, error)
 	SetProducts(products ...*Product) (store.ConditionMet, error)
 }
 
 type productStore struct {
-	db store.Store
+	db UnderlyingStore
 }
 
-func (p *productStore) GetProductById(ID uint) (*Product, error) {
-	raw, err := p.db.Read(table, "id", ID)
+func (p *productStore) GetProductByID(ID uint) (*Product, error) {
+	raw, err := p.db.Read(table.GetName(), "id", ID)
 	return checkAndReturn(raw, err)
 }
 
@@ -104,7 +114,7 @@ func (p *productStore) SetProducts(products ...*Product) (store.ConditionMet, er
 	for i, v := range products {
 		objs[i] = v
 	}
-	return p.db.WriteAfterExternalCondition(table, objs...)
+	return p.db.WriteAfterExternalCondition(table.GetName(), objs...)
 }
 
 func checkAndReturn(raw interface{}, err error) (*Product, error) {
@@ -119,7 +129,7 @@ type productLogger struct {
 	next ProductStore
 }
 
-func (p *productLogger) GetProductById(ID uint) (*Product, error) {
+func (p *productLogger) GetProductByID(ID uint) (*Product, error) {
 	var err error
 	var product *Product
 	defer func() {
@@ -131,7 +141,7 @@ func (p *productLogger) GetProductById(ID uint) (*Product, error) {
 		p.log.Debugw("Current stock for item", "id", ID, "stock", product)
 
 	}()
-	product, err = p.next.GetProductById(ID)
+	product, err = p.next.GetProductByID(ID)
 	return product, err
 }
 
