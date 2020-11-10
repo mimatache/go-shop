@@ -95,7 +95,7 @@ func JWTAuthorization(next http.Handler) http.Handler {
 		}
 
 		ok := authorization.IsBlacklisted(token)
-		if ok{
+		if ok {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}

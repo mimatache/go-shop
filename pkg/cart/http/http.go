@@ -109,7 +109,7 @@ func (s *ShoppingCart) checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cartContents, err := s.getContents(userID)
-	switch err.(type){
+	switch err.(type) {
 	case nil:
 		// nothing to do
 	case store.NotFound:
@@ -119,7 +119,7 @@ func (s *ShoppingCart) checkout(w http.ResponseWriter, r *http.Request) {
 		helpers.FormatError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
+
 	var cost uint
 	items := map[uint]uint{}
 	for _, item := range cartContents.Products {
@@ -150,7 +150,7 @@ func (s *ShoppingCart) checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	isMet(true)
-	
+
 	err = s.cartContents.ClearCartFor(userID)
 	if err != nil {
 		helpers.FormatError(w, err.Error(), http.StatusInternalServerError)

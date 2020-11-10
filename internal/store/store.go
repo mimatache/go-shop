@@ -7,7 +7,6 @@ import (
 
 type ConditionMet func(write bool)
 
-
 type NotFound struct {
 	Msg string
 }
@@ -17,13 +16,13 @@ func (u NotFound) Error() string {
 }
 
 // NewNotFoundError return a not found error for the given input
-func NewNotFoundError(tableName string, key string, value interface{} ) error {
+func NewNotFoundError(tableName string, key string, value interface{}) error {
 	return NotFound{fmt.Sprintf("could not find %s with %s equal to %v", tableName, key, value)}
 }
 
 // IsNotFoundError checks if an error is of type notFound
-func IsNotFoundError( err error) bool{
-	switch err.(type){
+func IsNotFoundError(err error) bool {
+	switch err.(type) {
 	case NotFound:
 		return true
 	default:
@@ -90,7 +89,6 @@ func (s *Store) Remove(table string, key string, value interface{}) error {
 	txn.Commit()
 	return nil
 }
-
 
 func (s *Store) shouldCommit(txn *memdb.Txn, db *memdb.MemDB) ConditionMet {
 	return func(write bool) {

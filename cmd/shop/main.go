@@ -27,7 +27,7 @@ import (
 var (
 	userSeeds    *os.File
 	productSeeds *os.File
-	port *string
+	port         *string
 )
 
 func main() {
@@ -76,7 +76,7 @@ func main() {
 
 	// Starting cart API
 	cartLogger := logger.WithFields(log, map[string]interface{}{"api": "cart"})
-	err = cart.NewAPI(cartLogger, produtsAPI, userAPI, payments.New(), db,  versionedRouter, middleware.JWTAuthorization)
+	err = cart.NewAPI(cartLogger, produtsAPI, userAPI, payments.New(), db, versionedRouter, middleware.JWTAuthorization)
 	if err != nil {
 		log.Errorf("could not start products API %v", err)
 		os.Exit(1)

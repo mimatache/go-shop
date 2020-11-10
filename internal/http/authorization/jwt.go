@@ -17,12 +17,11 @@ const (
 
 var blackListedTokens = map[string]struct{}{}
 
-
 func init() {
 	go func() {
 		timer := time.NewTimer(time.Minute * 5)
-		for range timer.C{
-				clearExpiredFromBlacklist()
+		for range timer.C {
+			clearExpiredFromBlacklist()
 		}
 	}()
 }
@@ -103,7 +102,7 @@ func BlacklistToken(token string) {
 func IsBlacklisted(token string) bool {
 	_, ok := blackListedTokens[token]
 	return ok
-} 
+}
 
 func clearExpiredFromBlacklist() {
 	validTokens := map[string]struct{}{}

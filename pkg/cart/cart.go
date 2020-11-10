@@ -13,12 +13,12 @@ import (
 
 // NewAPI instantiates a new cart API
 func NewAPI(
-	logger logger.Logger, 
+	logger logger.Logger,
 	inventory http.InventoryAPI,
-	users http.ClientAPI, 
-	payments http.PaymentsAPI, 
+	users http.ClientAPI,
+	payments http.PaymentsAPI,
 	db store.UnderlyingStore,
-	router *mux.Router, 
+	router *mux.Router,
 	handlers ...func(netHTTP.Handler) netHTTP.Handler,
 ) error {
 	cartStore, err := store.New(logger, db)
@@ -30,4 +30,3 @@ func NewAPI(
 
 	return nil
 }
-

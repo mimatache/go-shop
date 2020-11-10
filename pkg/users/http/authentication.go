@@ -33,8 +33,8 @@ func (u *AuthenticationAPI) login() http.Handler {
 			return
 		}
 		err := u.users.IsValid(username, providedPassword)
-		if err != nil{
-			if authentication.IsInvalidCredentialsError(err){
+		if err != nil {
+			if authentication.IsInvalidCredentialsError(err) {
 				helpers.FormatError(w, err.Error(), http.StatusUnauthorized)
 				return
 			}

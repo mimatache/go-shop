@@ -1,11 +1,11 @@
 package payments
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
-	"crypto/rand"
 )
 
 type Luke struct {
@@ -42,8 +42,8 @@ func (a *API) MakePayment(user string, money uint) error {
 
 func randomNumber() int {
 	b := make([]byte, 1)
-	_, err := rand.Read(b) 
-	if err != nil{
+	_, err := rand.Read(b)
+	if err != nil {
 		return 1
 	}
 	return int(b[0])

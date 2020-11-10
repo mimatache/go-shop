@@ -11,7 +11,6 @@ import (
 	"github.com/mimatache/go-shop/pkg/users/store"
 )
 
-
 // NewAPI instantiates a new user API and storage
 func NewAPI(log logger.Logger, router *mux.Router, db store.UnderlyingStore, seed io.Reader) (*authentication.User, error) {
 	users, err := store.New(log, seed, db)
@@ -24,4 +23,3 @@ func NewAPI(log logger.Logger, router *mux.Router, db store.UnderlyingStore, see
 	webAPI.RegisterToRouter(router)
 	return authentication, nil
 }
-

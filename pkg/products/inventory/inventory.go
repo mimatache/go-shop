@@ -1,6 +1,6 @@
 package inventory
 
-import(
+import (
 	"fmt"
 	"sync"
 

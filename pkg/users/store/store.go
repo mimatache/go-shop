@@ -5,7 +5,6 @@ import (
 	"io"
 
 	"github.com/hashicorp/go-memdb"
-
 )
 
 //go:generate mockgen -source ./store.go -destination mocks/store.go
@@ -67,9 +66,10 @@ type UnderlyingStore interface {
 func GetTable() *UserTable {
 	return table
 }
+
 // New creates a new user DB instance
-func New(log logger,  seed io.Reader, db UnderlyingStore) (UserStore, error) {
-	
+func New(log logger, seed io.Reader, db UnderlyingStore) (UserStore, error) {
+
 	var users []*User
 
 	err := json.NewDecoder(seed).Decode(&users)
@@ -77,7 +77,6 @@ func New(log logger,  seed io.Reader, db UnderlyingStore) (UserStore, error) {
 		return nil, err
 	}
 
-	
 	for _, user := range users {
 		err = db.Write(table.GetName(), user)
 		if err != nil {
@@ -108,7 +107,6 @@ func (u *userStore) GetPasswordFor(email string) (string, error) {
 	}
 	return user.Password, nil
 }
-
 
 type userLogger struct {
 	log   logger

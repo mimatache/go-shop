@@ -1,6 +1,6 @@
 package authentication_test
 
-import(
+import (
 	"fmt"
 	"testing"
 
@@ -13,13 +13,13 @@ import(
 )
 
 const (
-	goodUser = "user@email.com"
+	goodUser    = "user@email.com"
 	invalidUser = "baduser@mail.com"
-	goodPasswd = "testpassword"
+	goodPasswd  = "testpassword"
 	badPassword = "badpassword"
 )
 
-func TestUser_ValidCredentials(t *testing.T){
+func TestUser_ValidCredentials(t *testing.T) {
 	g := NewWithT(t)
 
 	ctrl := gomock.NewController(t)
@@ -29,15 +29,15 @@ func TestUser_ValidCredentials(t *testing.T){
 		EXPECT().
 		GetPasswordFor(goodUser).
 		Return(goodPasswd, nil)
-	
-	users := authentication.NewUser(registry)
+
+	users := authentication.New(registry)
 
 	err := users.IsValid(goodUser, goodPasswd)
 
 	g.Expect(err).ShouldNot(HaveOccurred(), "valid user password combo returned an error")
 }
 
-func TestUser_InvalidUsername(t *testing.T){
+func TestUser_InvalidUsername(t *testing.T) {
 	g := NewWithT(t)
 
 	ctrl := gomock.NewController(t)
@@ -47,17 +47,16 @@ func TestUser_InvalidUsername(t *testing.T){
 		EXPECT().
 		GetPasswordFor(invalidUser).
 		Return("", store.NewNotFoundError("users", "name", "name"))
-	
-	users := authentication.NewUser(registry)
+
+	users := authentication.New(registry)
 
 	err := users.IsValid(invalidUser, goodPasswd)
-
 
 	g.Expect(err).Should(HaveOccurred(), "invalid user password combo did not return an error")
 	g.Expect(err).Should(Equal(authentication.NewInvalidCredentials(invalidUser)))
 }
 
-func TestUser_InvalidPassword(t *testing.T){
+func TestUser_InvalidPassword(t *testing.T) {
 	g := NewWithT(t)
 
 	ctrl := gomock.NewController(t)
@@ -67,8 +66,8 @@ func TestUser_InvalidPassword(t *testing.T){
 		EXPECT().
 		GetPasswordFor(goodUser).
 		Return(goodPasswd, nil)
-	
-	users := authentication.NewUser(registry)
+
+	users := authentication.New(registry)
 
 	err := users.IsValid(goodUser, badPassword)
 
@@ -76,13 +75,13 @@ func TestUser_InvalidPassword(t *testing.T){
 	g.Expect(err).Should(Equal(authentication.NewInvalidCredentials(goodUser)))
 }
 
-func TestInvalidCredentials(t *testing.T){
+func TestInvalidCredentials(t *testing.T) {
 	g := NewWithT(t)
 
 	err := fmt.Errorf("some error")
 
 	g.Expect(authentication.IsInvalidCredentialsError(err)).To(BeFalse())
-	
+
 	err = authentication.NewInvalidCredentials("user")
 	g.Expect(authentication.IsInvalidCredentialsError(err)).To(BeTrue())
 

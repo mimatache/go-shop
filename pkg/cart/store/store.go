@@ -109,7 +109,7 @@ func (c *cartStore) getProductsForUser(userID uint) (*CartItem, error) {
 	return cartItem, nil
 }
 
-func (c *cartStore) ClearCartFor(userID uint) error{
+func (c *cartStore) ClearCartFor(userID uint) error {
 	return c.db.Remove(table.GetName(), id, userID)
 }
 
@@ -155,7 +155,7 @@ func (c *cartLogger) GetProductsForUser(userID uint) (map[uint]uint, error) {
 	return items, err
 }
 
-func (c *cartLogger) ClearCartFor(userID uint) error{
+func (c *cartLogger) ClearCartFor(userID uint) error {
 	var err error
 	defer func() {
 		if err != nil {

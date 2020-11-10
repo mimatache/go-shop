@@ -27,7 +27,7 @@ var (
 )
 
 // GetTable returns the product schema
-func GetTable () *ProductTable {
+func GetTable() *ProductTable {
 	return table
 }
 
@@ -88,7 +88,7 @@ func New(log logger, db UnderlyingStore, seed io.Reader) (ProductStore, error) {
 	}
 
 	return &productLogger{
-		log:  log,
+		log: log,
 		next: &productStore{
 			db: db,
 		},

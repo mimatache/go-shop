@@ -9,11 +9,11 @@ import (
 //go:generate mockgen -source ./authentication.go -destination mocks/authentication.go
 
 // UserRegistry abstracts aways the storage from the logic
-type UserRegistry interface{
+type UserRegistry interface {
 	GetPasswordFor(email string) (string, error)
 }
 
-type invalidCredentials struct{
+type invalidCredentials struct {
 	msg string
 }
 
@@ -23,7 +23,7 @@ func (i invalidCredentials) Error() string {
 
 // IsInvalidCredentialsError verifies if a given error refers to incalid credentials
 func IsInvalidCredentialsError(err error) bool {
-	switch err.(type){
+	switch err.(type) {
 	case invalidCredentials:
 		return true
 	default:
@@ -49,7 +49,7 @@ type User struct {
 // IsValid checks if a username
 func (u *User) IsValid(username, password string) error {
 	passwd, err := u.storage.GetPasswordFor(username)
-	if err != nil{
+	if err != nil {
 		if store.IsNotFoundError(err) {
 			return NewInvalidCredentials(username)
 		}
