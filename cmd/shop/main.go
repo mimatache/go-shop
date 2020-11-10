@@ -10,10 +10,18 @@ import (
 
 	"github.com/mimatache/go-shop/internal/http/middleware"
 	"github.com/mimatache/go-shop/internal/logger"
+	"github.com/mimatache/go-shop/internal/store"
+
 	"github.com/mimatache/go-shop/pkg/cart"
+	cartStore "github.com/mimatache/go-shop/pkg/cart/store"
+
 	"github.com/mimatache/go-shop/pkg/payments"
+
 	"github.com/mimatache/go-shop/pkg/products"
+	productsStore "github.com/mimatache/go-shop/pkg/products/store"
+
 	"github.com/mimatache/go-shop/pkg/users"
+	userStore "github.com/mimatache/go-shop/pkg/users/store"
 )
 
 var (
@@ -35,30 +43,45 @@ func main() {
 
 	log.Info("Starting app")
 
-	userAPI, err := users.NewAPI(logger.WithFields(log, map[string]interface{}{"api": "users"}), userSeeds)
+	r := mux.NewRouter()
+	r.Use(middleware.Logging(log))
+	versionedRouter := r.PathPrefix("/api/v1").Subrouter()
+
+	// Starting DB instance
+	schema := store.NewSchema()
+	schema.AddToSchema(userStore.GetTable())
+	schema.AddToSchema(productsStore.GetTable())
+	schema.AddToSchema(cartStore.GetTable())
+	db, err := store.New(schema)
+	if err != nil {
+		log.Errorf("could not start DB %v", err)
+		os.Exit(1)
+	}
+
+	// Starting user API
+	userLogger := logger.WithFields(log, map[string]interface{}{"api": "users"})
+	userAPI, err := users.NewAPI(userLogger, versionedRouter, db, userSeeds)
 	if err != nil {
 		log.Errorf("could not start user API %v", err)
 		os.Exit(1)
 	}
 
-	produtsAPI, err := products.NewAPI(logger.WithFields(log, map[string]interface{}{"api": "products"}), productSeeds)
+	// Starting product API
+	productLogger := logger.WithFields(log, map[string]interface{}{"api": "products"})
+	produtsAPI, err := products.NewAPI(productLogger, db, productSeeds)
 	if err != nil {
 		log.Errorf("could not start products API %v", err)
 		os.Exit(1)
 	}
 
-	cartAPI, err := cart.NewAPI(logger.WithFields(log, map[string]interface{}{"api": "cart"}), produtsAPI, userAPI, payments.New() )
+	// Starting cart API
+	cartLogger := logger.WithFields(log, map[string]interface{}{"api": "cart"})
+	err = cart.NewAPI(cartLogger, produtsAPI, userAPI, payments.New(), db,  versionedRouter, middleware.JWTAuthorization)
 	if err != nil {
 		log.Errorf("could not start products API %v", err)
 		os.Exit(1)
 	}
 
-	r := mux.NewRouter()
-	versionedRouter := r.PathPrefix("/api/v1").Subrouter()
-	userAPI.RegisterToRouter(versionedRouter)
-	cartAPI.RegisterToRouter(versionedRouter, middleware.JWTAuthorization)
-
-	r.Use(middleware.Logging(log))
 	if err := http.ListenAndServe(fmt.Sprintf(":%s", *port), r); err != nil {
 		log.Error(err)
 	}

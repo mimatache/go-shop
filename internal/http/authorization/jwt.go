@@ -30,16 +30,14 @@ func init() {
 // Claim uses the standard JWT Claim to create a custom claim
 type Claim struct {
 	Username string `json:"username"`
-	ID       uint   `json:"ID"`
 	jwt.StandardClaims
 }
 
 // GenerateJWTToken generates a JWT token for the provided username
-func GenerateJWTToken(username string, ID uint) (string, time.Time, error) {
+func GenerateJWTToken(username string) (string, time.Time, error) {
 	expirationTime := time.Now().Add(5 * time.Minute)
 	claims := &Claim{
 		Username: username,
-		ID:       ID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 		},
@@ -62,7 +60,7 @@ func ValidateToken(tknStr string) (bool, *Claim, error) {
 }
 
 func AddUserIdHeader(r *http.Request, claim *Claim) {
-	r.Header.Add(userIDKey, fmt.Sprint(claim.ID))
+	r.Header.Add(userIDKey, fmt.Sprint(claim.Username))
 }
 
 func RemoveUserIDHeader(r *http.Request) {

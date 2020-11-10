@@ -17,6 +17,7 @@ run-tests:
 
 install-go-tools:
 	@./scripts/install_tools.sh
+	go install github.com/golang/mock/mockgen
 
 lint:
 	golangci-lint run ./...

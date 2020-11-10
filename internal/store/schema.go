@@ -4,8 +4,12 @@ import (
 	"github.com/hashicorp/go-memdb"
 )
 
-type Table interface {
+type Named interface {
 	GetName() string
+}
+
+type Table interface {
+	Named
 	GetTableSchema() *memdb.TableSchema
 }
 
