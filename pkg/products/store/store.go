@@ -9,6 +9,8 @@ import (
 	"github.com/mimatache/go-shop/internal/store"
 )
 
+//go:generate mockgen -source ./store.go -destination mocks/store.go
+
 type logger interface {
 	Infof(msg string, args ...interface{})
 	Debugf(msg string, args ...interface{})
@@ -98,6 +100,7 @@ func New(log logger, db UnderlyingStore) ProductStore {
 	}
 }
 
+// ProductStore models the Product DB
 type ProductStore interface {
 	GetProductByID(ID uint) (*Product, error)
 	SetProducts(products ...*Product) (store.ConditionMet, error)
@@ -107,11 +110,13 @@ type productStore struct {
 	db UnderlyingStore
 }
 
+// GetProductByID returns a product give the product ID
 func (p *productStore) GetProductByID(ID uint) (*Product, error) {
 	raw, err := p.db.Read(table.GetName(), "id", ID)
 	return checkAndReturn(raw, err)
 }
 
+// SetProducts updates the Product DB with the given products
 func (p *productStore) SetProducts(products ...*Product) (store.ConditionMet, error) {
 	objs := make([]interface{}, len(products))
 	for i, v := range products {
@@ -120,6 +125,10 @@ func (p *productStore) SetProducts(products ...*Product) (store.ConditionMet, er
 	return p.db.WriteAfterExternalCondition(table.GetName(), objs...)
 }
 
+// checkAndReturn reads the output from the DB and returns a Product instance if no error occured.
+// This will panic if the DB does not return and error but the output is not an Product. 
+// Intentinally left to do this as if this happens it means we have an incosistency in the DB that should be resolve immediately
+// and silent handling might mask this issue
 func checkAndReturn(raw interface{}, err error) (*Product, error) {
 	if err != nil {
 		return nil, err
