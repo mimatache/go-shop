@@ -8,6 +8,7 @@ import (
 )
 
 //go:generate mockgen -source ./store.go -destination mocks/store.go
+
 type logger interface {
 	Infof(msg string, args ...interface{})
 	Debugf(msg string, args ...interface{})

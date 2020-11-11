@@ -38,14 +38,14 @@ func TestUserStore_GetPasswordByEmail(t *testing.T) {
 
 	mockStore := mock_store.NewMockUnderlyingStore(ctrl)
 
-	userStore := userStore.New(log, mockStore)
+	users := userStore.New(log, mockStore)
 
 	mockStore.
 		EXPECT().
 		Read("user", "email", userEmail).
 		Return(user, nil)
 
-	pass, err := userStore.GetPasswordFor(userEmail)
+	pass, err := users.GetPasswordFor(userEmail)
 	
 	g.Expect(err).ShouldNot(HaveOccurred())
 	g.Expect(pass).To(Equal(password))
@@ -62,14 +62,14 @@ func TestUserStore_GiveInvalidEmail(t *testing.T) {
 
 	mockStore := mock_store.NewMockUnderlyingStore(ctrl)
 
-	userStore := userStore.New(log, mockStore)
+	users := userStore.New(log, mockStore)
 
 	mockStore.
 		EXPECT().
 		Read("user", "email", userEmail).
 		Return(nil, store.NewNotFoundError("user", "email", userEmail))
 
-	_, err := userStore.GetPasswordFor(userEmail)
+	_, err := users.GetPasswordFor(userEmail)
 	
 	g.Expect(err).Should(HaveOccurred())
 }
