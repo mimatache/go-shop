@@ -1,8 +1,6 @@
 package users
 
 import (
-	"io"
-
 	"github.com/gorilla/mux"
 
 	"github.com/mimatache/go-shop/internal/logger"
@@ -12,14 +10,10 @@ import (
 )
 
 // NewAPI instantiates a new user API and storage
-func NewAPI(log logger.Logger, router *mux.Router, db store.UnderlyingStore, seed io.Reader) (*authentication.User, error) {
-	users, err := store.New(log, seed, db)
-	if err != nil {
-		log.Errorf("could not instantiate users DB")
-		return nil, err
-	}
+func NewAPI(log logger.Logger, router *mux.Router, db store.UnderlyingStore) *authentication.User {
+	users := store.New(log, db)
 	authentication := authentication.New(users)
 	webAPI := http.New(authentication)
 	webAPI.RegisterToRouter(router)
-	return authentication, nil
+	return authentication
 }

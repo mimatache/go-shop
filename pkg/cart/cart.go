@@ -20,13 +20,9 @@ func NewAPI(
 	db store.UnderlyingStore,
 	router *mux.Router,
 	handlers ...func(netHTTP.Handler) netHTTP.Handler,
-) error {
-	cartStore, err := store.New(logger, db)
-	if err != nil {
-		return err
-	}
+) {
+	cartStore := store.New(logger, db)
 	shoppingCart := http.New(inventory, users, payments, cartStore)
 	shoppingCart.AddRoutes(router, handlers...)
 
-	return nil
 }

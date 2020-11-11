@@ -11,15 +11,11 @@ import (
 	"github.com/mimatache/go-shop/internal/http/middleware"
 	"github.com/mimatache/go-shop/internal/logger"
 	"github.com/mimatache/go-shop/internal/store"
-
 	"github.com/mimatache/go-shop/pkg/cart"
 	cartStore "github.com/mimatache/go-shop/pkg/cart/store"
-
 	"github.com/mimatache/go-shop/pkg/payments"
-
 	"github.com/mimatache/go-shop/pkg/products"
 	productsStore "github.com/mimatache/go-shop/pkg/products/store"
-
 	"github.com/mimatache/go-shop/pkg/users"
 	userStore "github.com/mimatache/go-shop/pkg/users/store"
 )
@@ -39,6 +35,7 @@ func main() {
 	}
 	defer flush()
 
+	// Reading seed files
 	readFlagValues(log)
 
 	log.Info("Starting app")
@@ -58,29 +55,29 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Starting user API
-	userLogger := logger.WithFields(log, map[string]interface{}{"api": "users"})
-	userAPI, err := users.NewAPI(userLogger, versionedRouter, db, userSeeds)
+	// Loading the seeds to the DB
+	err = userStore.LoadSeeds(userSeeds, db)
 	if err != nil {
-		log.Errorf("could not start user API %v", err)
+		log.Errorf("could not load seeds for user to DB %v", err)
 		os.Exit(1)
 	}
+	err = productsStore.LoadSeeds(productSeeds, db)
+	if err != nil {
+		log.Errorf("could not load seeds for product to DB %v", err)
+		os.Exit(1)
+	}
+
+	// Starting user API
+	userLogger := logger.WithFields(log, map[string]interface{}{"api": "users"})
+	userAPI := users.NewAPI(userLogger, versionedRouter, db)
 
 	// Starting product API
 	productLogger := logger.WithFields(log, map[string]interface{}{"api": "products"})
-	produtsAPI, err := products.NewAPI(productLogger, db, productSeeds)
-	if err != nil {
-		log.Errorf("could not start products API %v", err)
-		os.Exit(1)
-	}
+	produtsAPI := products.NewAPI(productLogger, db)
 
 	// Starting cart API
 	cartLogger := logger.WithFields(log, map[string]interface{}{"api": "cart"})
-	err = cart.NewAPI(cartLogger, produtsAPI, userAPI, payments.New(), db, versionedRouter, middleware.JWTAuthorization)
-	if err != nil {
-		log.Errorf("could not start products API %v", err)
-		os.Exit(1)
-	}
+	cart.NewAPI(cartLogger, produtsAPI, userAPI, payments.New(), db, versionedRouter, middleware.JWTAuthorization)
 
 	if err := http.ListenAndServe(fmt.Sprintf(":%s", *port), r); err != nil {
 		log.Error(err)

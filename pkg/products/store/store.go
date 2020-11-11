@@ -31,6 +31,24 @@ func GetTable() *ProductTable {
 	return table
 }
 
+// LoadSeeds write the seed information to the DB.
+func LoadSeeds(seed io.Reader, db UnderlyingStore) error {
+	var products []*Product
+
+	err := json.NewDecoder(seed).Decode(&products)
+	if err != nil {
+		return err
+	}
+
+	for _, product := range products {
+		err = db.Write(table.GetName(), product)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // ProductTable represents the product table in the DB
 type ProductTable struct {
 	name string
@@ -71,28 +89,13 @@ func (u *ProductTable) GetTableSchema() *memdb.TableSchema {
 }
 
 // New returns a new instance of ProductStore
-func New(log logger, db UnderlyingStore, seed io.Reader) (ProductStore, error) {
-
-	var products []*Product
-
-	err := json.NewDecoder(seed).Decode(&products)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, product := range products {
-		err = db.Write(table.GetName(), product)
-		if err != nil {
-			return nil, err
-		}
-	}
-
+func New(log logger, db UnderlyingStore) ProductStore {
 	return &productLogger{
 		log: log,
 		next: &productStore{
 			db: db,
 		},
-	}, nil
+	}
 }
 
 type ProductStore interface {

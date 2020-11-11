@@ -67,27 +67,29 @@ func GetTable() *UserTable {
 	return table
 }
 
-// New creates a new user DB instance
-func New(log logger, seed io.Reader, db UnderlyingStore) (UserStore, error) {
-
+// LoadSeeds write the seed information to the DB.
+func LoadSeeds(seed io.Reader, db UnderlyingStore) error {
 	var users []*User
 
 	err := json.NewDecoder(seed).Decode(&users)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
 	for _, user := range users {
 		err = db.Write(table.GetName(), user)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
+	return nil
+}
 
+// New creates a new user DB instance
+func New(log logger, db UnderlyingStore) UserStore {
 	return &userLogger{
 		log:   log,
 		store: &userStore{db: db},
-	}, nil
+	}
 }
 
 // UserStore models the user DB

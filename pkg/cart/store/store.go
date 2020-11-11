@@ -66,12 +66,11 @@ type CartStore interface {
 }
 
 // New start a new instance of cart store
-func New(log logger, db UnderlyingStore) (CartStore, error) {
-
+func New(log logger, db UnderlyingStore) CartStore {
 	return &cartLogger{
 		log:  log,
 		next: &cartStore{db: db},
-	}, nil
+	}
 }
 
 type cartStore struct {
