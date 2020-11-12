@@ -87,5 +87,4 @@ func TestInvalidCredentials(t *testing.T) {
 
 	err = authentication.NewInvalidCredentials("user")
 	g.Expect(authentication.IsInvalidCredentialsError(err)).To(BeTrue())
-
 }

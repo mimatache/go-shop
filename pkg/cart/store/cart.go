@@ -28,7 +28,7 @@ type CartItem struct {
 func (c CartItem) Validate() error {
 	var errs errors
 	if c.ID == "" {
-		errs = append(errs, fmt.Errorf("User ID cannot be 0"))
+		errs = append(errs, fmt.Errorf("user ID cannot be 0"))
 	}
 	if len(errs) > 0 {
 		return errs

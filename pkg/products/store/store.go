@@ -87,22 +87,22 @@ func (u *ProductTable) GetTableSchema() *memdb.TableSchema {
 	return &memdb.TableSchema{
 		Name: u.name,
 		Indexes: map[string]*memdb.IndexSchema{
-			"id": &memdb.IndexSchema{
+			"id": {
 				Name:    "id",
 				Unique:  true,
 				Indexer: &memdb.UintFieldIndex{Field: "ID"},
 			},
-			"name": &memdb.IndexSchema{
+			"name": {
 				Name:    "name",
 				Unique:  false,
 				Indexer: &memdb.StringFieldIndex{Field: "Name"},
 			},
-			"price": &memdb.IndexSchema{
+			"price": {
 				Name:    "price",
 				Unique:  false,
 				Indexer: &memdb.UintFieldIndex{Field: "Price"},
 			},
-			"stock": &memdb.IndexSchema{
+			"stock": {
 				Name:    "stock",
 				Unique:  true,
 				Indexer: &memdb.UintFieldIndex{Field: "Stock"},
@@ -132,8 +132,8 @@ type productStore struct {
 }
 
 // GetProductByID returns a product give the product ID
-func (p *productStore) GetProductByID(ID uint) (*Product, error) {
-	raw, err := p.db.Read(table.GetName(), "id", ID)
+func (p *productStore) GetProductByID(id uint) (*Product, error) {
+	raw, err := p.db.Read(table.GetName(), "id", id)
 	return checkAndReturn(raw, err)
 }
 
@@ -153,7 +153,7 @@ func (p *productStore) SetProducts(products ...*Product) (*ProductTransaction, e
 	}, nil
 }
 
-// checkAndReturn reads the output from the DB and returns a Product instance if no error occured.
+// checkAndReturn reads the output from the DB and returns a Product instance if no error occurred.
 // This will panic if the DB does not return and error but the output is not an Product.
 // Intentinally left to do this as if this happens it means we have an incosistency in the DB that should be resolve immediately
 // and silent handling might mask this issue
@@ -169,19 +169,18 @@ type productLogger struct {
 	next ProductStore
 }
 
-func (p *productLogger) GetProductByID(ID uint) (*Product, error) {
+func (p *productLogger) GetProductByID(id uint) (*Product, error) {
 	var err error
 	var product *Product
 	defer func() {
 		if err != nil {
-			p.log.Debugw("error occured when retrieving product", "id", ID, "err", err)
+			p.log.Debugw("error occurred when retrieving product", "id", id, "err", err)
 			return
 		}
-		p.log.Debugf("Retrieved product %d", ID)
-		p.log.Debugw("Current stock for item", "id", ID, "stock", product)
-
+		p.log.Debugf("Retrieved product %d", id)
+		p.log.Debugw("Current stock for item", "id", id, "stock", product)
 	}()
-	product, err = p.next.GetProductByID(ID)
+	product, err = p.next.GetProductByID(id)
 	return product, err
 }
 
@@ -189,7 +188,7 @@ func (p *productLogger) SetProducts(products ...*Product) (*ProductTransaction, 
 	var err error
 	defer func() {
 		if err != nil {
-			p.log.Debugw("error occured when setting products", "error", err)
+			p.log.Debugw("error occurred when setting products", "error", err)
 			return
 		}
 		p.log.Debugf("Products successfully updated")

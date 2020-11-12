@@ -48,13 +48,13 @@ type User struct {
 func (u User) Validate() error {
 	var errs errors
 	if u.ID == 0 {
-		errs = append(errs, fmt.Errorf("User ID cannot be 0"))
+		errs = append(errs, fmt.Errorf("user ID cannot be 0"))
 	}
 	if u.Name == "" {
-		errs = append(errs, fmt.Errorf("Name is mandatory"))
+		errs = append(errs, fmt.Errorf("name is mandatory"))
 	}
 	if u.Password == "" {
-		errs = append(errs, fmt.Errorf("Password is mandatory"))
+		errs = append(errs, fmt.Errorf("password is mandatory"))
 	}
 	if err := u.Email.Validate(); err != nil {
 		errs = append(errs, err)
@@ -63,5 +63,4 @@ func (u User) Validate() error {
 		return errs
 	}
 	return nil
-
 }

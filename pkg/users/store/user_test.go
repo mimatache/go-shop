@@ -9,7 +9,6 @@ import (
 )
 
 func TestEmail_ValidAddresses(t *testing.T) {
-
 	validEmails := []store.Email{
 		"someone@email.com",
 		"someone_else@email.com",
@@ -26,11 +25,9 @@ func TestEmail_ValidAddresses(t *testing.T) {
 			g.Expect(err).ShouldNot(HaveOccurred(), "email validation reported a good email as bad")
 		})
 	}
-
 }
 
 func TestEmail_InvalidAddresses(t *testing.T) {
-
 	validEmails := []store.Email{
 		"someone@email.com ",
 		" someone_else@email.com",
@@ -48,5 +45,4 @@ func TestEmail_InvalidAddresses(t *testing.T) {
 			g.Expect(err).Should(HaveOccurred(), "email validation reported a bad email as good")
 		})
 	}
-
 }

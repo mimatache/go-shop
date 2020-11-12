@@ -32,7 +32,6 @@ var (
 )
 
 func main() {
-
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
@@ -43,7 +42,7 @@ func main() {
 	log, flush, err := logger.New("shop", true)
 	if err != nil {
 		fmt.Printf("Could not instantiate logger %v", err)
-		os.Exit(1)
+		panic(err)
 	}
 	defer flush()
 
@@ -64,17 +63,20 @@ func main() {
 	schema.AddToSchema(cartStore.GetTable())
 	db, err := store.New(schema)
 	if err != nil {
-		log.Fatal(fmt.Sprintf("could not start DB %v", err))
+		log.Errorf("could not start DB %v", err)
+		return
 	}
 
 	// Loading the seeds to the DB
 	err = userStore.LoadSeeds(userSeeds, db)
 	if err != nil {
-		log.Fatal(fmt.Sprintf("could not load seeds for user to DB %v", err))
+		log.Errorf("could not load seeds for user to DB %v", err)
+		return
 	}
 	err = productsStore.LoadSeeds(productSeeds, db)
 	if err != nil {
-		log.Fatal(fmt.Sprintf("could not load seeds for product to DB %v", err))
+		log.Errorf("could not load seeds for product to DB %v", err)
+		return
 	}
 
 	// Starting user API
@@ -90,7 +92,7 @@ func main() {
 	cart.NewAPI(cartLogger, productsAPI, payments.New(), db, versionedRouter, middleware.JWTAuthorization)
 
 	srv := &http.Server{
-		Addr: fmt.Sprintf(":%s", *port),
+		Addr:    fmt.Sprintf(":%s", *port),
 		Handler: r,
 	}
 
@@ -102,11 +104,11 @@ func main() {
 
 	<-c
 	log.Info("Shutting down...")
-	ctx, cancel = context.WithTimeout(ctx, time.Second * 5)
+	ctx, cancel = context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 	err = srv.Shutdown(ctx)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
 	}
 }
 

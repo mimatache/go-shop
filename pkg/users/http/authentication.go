@@ -50,10 +50,8 @@ func (u *AuthenticationAPI) login() http.Handler {
 		}
 
 		authorization.SetAuthCookie(w, tokenString, expirationTime)
-
 	}
 	return http.HandlerFunc(fn)
-
 }
 
 func (u *AuthenticationAPI) logout() http.Handler {

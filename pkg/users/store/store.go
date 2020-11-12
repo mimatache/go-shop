@@ -33,22 +33,22 @@ func (u *UserTable) GetTableSchema() *memdb.TableSchema {
 	return &memdb.TableSchema{
 		Name: u.name,
 		Indexes: map[string]*memdb.IndexSchema{
-			"id": &memdb.IndexSchema{
+			"id": {
 				Name:    "id",
 				Unique:  true,
 				Indexer: &memdb.UintFieldIndex{Field: "ID"},
 			},
-			"name": &memdb.IndexSchema{
+			"name": {
 				Name:    "name",
 				Unique:  false,
 				Indexer: &memdb.StringFieldIndex{Field: "Name"},
 			},
-			"password": &memdb.IndexSchema{
+			"password": {
 				Name:    "password",
 				Unique:  false,
 				Indexer: &memdb.StringFieldIndex{Field: "Password"},
 			},
-			"email": &memdb.IndexSchema{
+			"email": {
 				Name:    "email",
 				Unique:  true,
 				Indexer: &memdb.StringFieldIndex{Field: "Email"},
@@ -117,11 +117,10 @@ type userLogger struct {
 }
 
 func (u *userLogger) GetPasswordFor(name string) (string, error) {
-
 	var err error
 	defer func() {
 		if err != nil {
-			u.log.Debugf("error occured when retrieving password for user %s", name)
+			u.log.Debugf("error occurred when retrieving password for user %s", name)
 			u.log.Debugf("%v", err)
 			return
 		}
@@ -131,7 +130,7 @@ func (u *userLogger) GetPasswordFor(name string) (string, error) {
 	return user, err
 }
 
-// checkAndReturn reads the output from the DB and returns a User instance if no error occured.
+// checkAndReturn reads the output from the DB and returns a User instance if no error occurred.
 // This will panic if the DB does not return and error but the output is not an User.
 // Intentinally left to do this as if this happens it means we have an incosistency in the DB that should be resolve immediately
 // and silent handling might mask this issue

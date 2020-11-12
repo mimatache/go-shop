@@ -2,15 +2,18 @@ package store
 
 import (
 	"fmt"
+
 	"github.com/hashicorp/go-memdb"
 )
 
+// Transaction represents the open DB transaction
 type Transaction interface {
 	Commit()
 	Abort()
 	Insert(table string, value interface{}) error
 }
 
+// NotFound is a custom error that is returned when no item can be found
 type NotFound struct {
 	Msg string
 }

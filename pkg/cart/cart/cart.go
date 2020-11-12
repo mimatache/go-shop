@@ -115,7 +115,6 @@ func (c *Cart) Checkout(userID string) (*Contents, error) {
 
 // AddProductToCart adds a bew product to the cart (or updates the existing item quantity if some already present)
 func (c *Cart) AddProductToCart(userID string, prod Product) (*Contents, error) {
-
 	currentProducts, err := c.cartContents.GetProductsForUser(userID)
 	if err != nil && !store.IsNotFoundError(err) {
 		return nil, err
@@ -127,7 +126,7 @@ func (c *Cart) AddProductToCart(userID string, prod Product) (*Contents, error) 
 		return nil, err
 	}
 	if !hasStock {
-		return nil, fmt.Errorf("Insuficient stock")
+		return nil, fmt.Errorf("insuficient stock")
 	}
 
 	_, err = c.cartContents.AddProduct(userID, prod.ID, prod.Quantity)

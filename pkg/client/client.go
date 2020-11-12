@@ -63,9 +63,10 @@ func (s *ShopClient) Login() error {
 	return nil
 }
 
-func (s *ShopClient) AddToCart(prodId, qunatity uint) error {
+// AddToCart adds a product to the client cart
+func (s *ShopClient) AddToCart(prodID, qunatity uint) error {
 	product := &Product{
-		ID:       prodId,
+		ID:       prodID,
 		Quantity: qunatity,
 	}
 	reqBody, err := json.Marshal(product)
