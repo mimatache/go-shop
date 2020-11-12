@@ -123,26 +123,6 @@ func (mr *MockUnderlyingStoreMockRecorder) Read(table, key, value interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockUnderlyingStore)(nil).Read), table, key, value)
 }
 
-// WriteAfterExternalCondition mocks base method
-func (m *MockUnderlyingStore) WriteAfterExternalCondition(table string, objs ...interface{}) (store.ConditionMet, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{table}
-	for _, a := range objs {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "WriteAfterExternalCondition", varargs...)
-	ret0, _ := ret[0].(store.ConditionMet)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WriteAfterExternalCondition indicates an expected call of WriteAfterExternalCondition
-func (mr *MockUnderlyingStoreMockRecorder) WriteAfterExternalCondition(table interface{}, objs ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{table}, objs...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteAfterExternalCondition", reflect.TypeOf((*MockUnderlyingStore)(nil).WriteAfterExternalCondition), varargs...)
-}
-
 // Write mocks base method
 func (m *MockUnderlyingStore) Write(table string, value ...interface{}) error {
 	m.ctrl.T.Helper()
@@ -160,6 +140,26 @@ func (mr *MockUnderlyingStoreMockRecorder) Write(table interface{}, value ...int
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{table}, value...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockUnderlyingStore)(nil).Write), varargs...)
+}
+
+// WriteAndBlock mocks base method
+func (m *MockUnderlyingStore) WriteAndBlock(table string, value ...interface{}) (store.Transaction, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{table}
+	for _, a := range value {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WriteAndBlock", varargs...)
+	ret0, _ := ret[0].(store.Transaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WriteAndBlock indicates an expected call of WriteAndBlock
+func (mr *MockUnderlyingStoreMockRecorder) WriteAndBlock(table interface{}, value ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{table}, value...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteAndBlock", reflect.TypeOf((*MockUnderlyingStore)(nil).WriteAndBlock), varargs...)
 }
 
 // MockProductStore is a mock of ProductStore interface
@@ -201,14 +201,14 @@ func (mr *MockProductStoreMockRecorder) GetProductByID(ID interface{}) *gomock.C
 }
 
 // SetProducts mocks base method
-func (m *MockProductStore) SetProducts(products ...*store0.Product) (store.ConditionMet, error) {
+func (m *MockProductStore) SetProducts(products ...*store0.Product) (*store0.ProductTransaction, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
 	for _, a := range products {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SetProducts", varargs...)
-	ret0, _ := ret[0].(store.ConditionMet)
+	ret0, _ := ret[0].(*store0.ProductTransaction)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

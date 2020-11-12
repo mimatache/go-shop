@@ -5,7 +5,11 @@ import (
 	"github.com/hashicorp/go-memdb"
 )
 
-type ConditionMet func(write bool)
+type Transaction interface {
+	Commit()
+	Abort()
+	Insert(table string, value interface{}) error
+}
 
 type NotFound struct {
 	Msg string
@@ -46,25 +50,27 @@ type Store struct {
 
 // Write inserts a row into the table
 func (s *Store) Write(table string, objs ...interface{}) error {
-	finalizer, err := s.WriteAfterExternalCondition(table, objs...)
-	if err != nil {
-		return err
+	txn := s.db.Txn(true)
+	for _, obj := range objs {
+		if err := txn.Insert(table, obj); err != nil {
+			txn.Abort()
+			return err
+		}
 	}
-	finalizer(true)
+	txn.Commit()
 	return nil
 }
 
-// WriteAfterExternalCondition permanently adds items in the DB only after an external condition is met
-func (s *Store) WriteAfterExternalCondition(table string, objs ...interface{}) (ConditionMet, error) {
+// WriteAndBlock writes to the store but block any other writing until the returned function is called
+func (s *Store) WriteAndBlock(table string, objs ...interface{}) (Transaction, error) {
 	txn := s.db.Txn(true)
-	shouldCommit := s.shouldCommit(txn, s.db.Snapshot())
 	for _, obj := range objs {
 		if err := txn.Insert(table, obj); err != nil {
 			txn.Abort()
 			return nil, err
 		}
 	}
-	return shouldCommit, nil
+	return txn, nil
 }
 
 // Read returns a row from a DB table
@@ -88,15 +94,4 @@ func (s *Store) Remove(table string, key string, value interface{}) error {
 	}
 	txn.Commit()
 	return nil
-}
-
-func (s *Store) shouldCommit(txn *memdb.Txn, db *memdb.MemDB) ConditionMet {
-	return func(write bool) {
-		if write {
-			txn.Commit()
-		} else {
-			txn.Abort()
-			s.db = db
-		}
-	}
 }

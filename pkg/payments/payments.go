@@ -35,7 +35,7 @@ func (a *API) MakePayment(user string, money uint) error {
 		luke.Name = "Darth Vader"
 	}
 	if (randomNumber() % 2) == 0 {
-		return fmt.Errorf("request blocked by %s", luke.Name)
+		return fmt.Errorf("request blocked by %s. don't spend %d", luke.Name, money)
 	}
 	return nil
 }

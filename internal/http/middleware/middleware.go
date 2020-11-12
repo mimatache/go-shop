@@ -100,7 +100,7 @@ func JWTAuthorization(next http.Handler) http.Handler {
 			return
 		}
 
-		authorization.AddUserIdHeader(r, claim)
+		authorization.AddUserIDHeader(r, claim)
 		defer authorization.RemoveUserIDHeader(r)
 		next.ServeHTTP(w, r)
 	}

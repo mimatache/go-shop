@@ -40,7 +40,7 @@ func (u *ShoppingCartTable) GetTableSchema() *memdb.TableSchema {
 			"id": &memdb.IndexSchema{
 				Name:    "id",
 				Unique:  true,
-				Indexer: &memdb.UintFieldIndex{Field: "ID"},
+				Indexer: &memdb.StringFieldIndex{Field: "ID"},
 			},
 			"products": &memdb.IndexSchema{
 				Name:    "products",
@@ -54,15 +54,15 @@ func (u *ShoppingCartTable) GetTableSchema() *memdb.TableSchema {
 // UnderlyingStore represents the interface that the DB should implement to be usable
 type UnderlyingStore interface {
 	Read(table string, key string, value interface{}) (interface{}, error)
-	WriteAfterExternalCondition(table string, objs ...interface{}) (store.ConditionMet, error)
+	Write(table string, objs ...interface{}) error
 	Remove(table string, key string, value interface{}) error
 }
 
 // CartStore represents the shopping cart store
 type CartStore interface {
-	AddProductWhenConditionIsMet(userID uint, prodID uint, quantity uint) (store.ConditionMet, uint, error)
-	GetProductsForUser(userID uint) (map[uint]uint, error)
-	ClearCartFor(userID uint) error
+	AddProduct(userID string, prodID uint, quantity uint) (uint, error)
+	GetProductsForUser(userID string) (map[uint]uint, error)
+	ClearCartFor(userID string) error
 }
 
 // New start a new instance of cart store
@@ -77,7 +77,8 @@ type cartStore struct {
 	db UnderlyingStore
 }
 
-func (c *cartStore) AddProductWhenConditionIsMet(userID uint, prodID uint, quantity uint) (store.ConditionMet, uint, error) {
+// AddProduct adds a product to the cart or increases the quantity of the item if already present2
+func (c *cartStore) AddProduct(userID string, prodID uint, quantity uint) (uint, error) {
 	var cartItem *CartItem
 	cartItem, err := c.getProductsForUser(userID)
 	switch err.(type) {
@@ -90,16 +91,31 @@ func (c *cartStore) AddProductWhenConditionIsMet(userID uint, prodID uint, quant
 	case store.NotFound:
 		cartItem, err = NewCartItem(userID, prodID, quantity)
 		if err != nil {
-			return nil, 0, err
+			return 0, err
 		}
 	default:
-		return nil, 0, err
+		return 0, err
 	}
-	isMet, err := c.db.WriteAfterExternalCondition(table.GetName(), cartItem)
-	return isMet, cartItem.Products[prodID], err
+	err = c.db.Write(table.GetName(), cartItem)
+	return cartItem.Products[prodID], err
 }
 
-func (c *cartStore) getProductsForUser(userID uint) (*CartItem, error) {
+// Removes the cart for the user
+func (c *cartStore) ClearCartFor(userID string) error {
+	return c.db.Remove(table.GetName(), id, userID)
+}
+
+// Returns the cart of the user
+func (c *cartStore) GetProductsForUser(userID string) (map[uint]uint, error) {
+	cart, err := c.getProductsForUser(userID)
+	if err != nil {
+		return nil, err
+	}
+	return cart.Products, nil
+}
+
+
+func (c *cartStore) getProductsForUser(userID string) (*CartItem, error) {
 	item, err := c.db.Read(table.GetName(), id, userID)
 	if err != nil {
 		return nil, err
@@ -108,25 +124,15 @@ func (c *cartStore) getProductsForUser(userID uint) (*CartItem, error) {
 	return cartItem, nil
 }
 
-func (c *cartStore) ClearCartFor(userID uint) error {
-	return c.db.Remove(table.GetName(), id, userID)
-}
-
-func (c *cartStore) GetProductsForUser(userID uint) (map[uint]uint, error) {
-	cart, err := c.getProductsForUser(userID)
-	if err != nil {
-		return nil, err
-	}
-	return cart.Products, nil
-}
 
 type cartLogger struct {
 	log  logger
 	next CartStore
 }
 
-func (c *cartLogger) AddProductWhenConditionIsMet(userID uint, prodID uint, quantity uint) (store.ConditionMet, uint, error) {
+func (c *cartLogger) AddProduct(userID string, prodID uint, quantity uint) (uint, error) {
 	var err error
+
 	defer func() {
 		if err != nil {
 			c.log.Debugf("could not update cart for user %d err: %s", userID, err.Error())
@@ -134,11 +140,11 @@ func (c *cartLogger) AddProductWhenConditionIsMet(userID uint, prodID uint, quan
 		}
 		c.log.Debugf("updated cart for user %d for product %d with %d", userID, prodID, quantity)
 	}()
-	conditionMet, quantity, err := c.next.AddProductWhenConditionIsMet(userID, prodID, quantity)
-	return conditionMet, quantity, err
+	quantity, err = c.next.AddProduct(userID, prodID, quantity)
+	return quantity, err
 }
 
-func (c *cartLogger) GetProductsForUser(userID uint) (map[uint]uint, error) {
+func (c *cartLogger) GetProductsForUser(userID string) (map[uint]uint, error) {
 	var err error
 	var items map[uint]uint
 	defer func() {
@@ -154,7 +160,7 @@ func (c *cartLogger) GetProductsForUser(userID uint) (map[uint]uint, error) {
 	return items, err
 }
 
-func (c *cartLogger) ClearCartFor(userID uint) error {
+func (c *cartLogger) ClearCartFor(userID string) error {
 	var err error
 	defer func() {
 		if err != nil {

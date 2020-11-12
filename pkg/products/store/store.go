@@ -11,6 +11,27 @@ import (
 
 //go:generate mockgen -source ./store.go -destination mocks/store.go
 
+// ProductTransaction is used to externalize transactions
+type ProductTransaction struct {
+	tableName   string
+	transaction store.Transaction
+}
+
+// Commit is used to finalyze this transaction
+func (r *ProductTransaction) Commit() {
+	r.transaction.Commit()
+}
+
+// Abort is used to cancel this transaction
+func (r *ProductTransaction) Abort() {
+	r.transaction.Abort()
+}
+
+// Write inserts intp storace
+func (r *ProductTransaction) Write(product *Product) error {
+	return r.transaction.Insert(r.tableName, product)
+}
+
 type logger interface {
 	Infof(msg string, args ...interface{})
 	Debugf(msg string, args ...interface{})
@@ -20,8 +41,8 @@ type logger interface {
 // UnderlyingStore represents the interface that the DB should implement to be usable
 type UnderlyingStore interface {
 	Read(table string, key string, value interface{}) (interface{}, error)
-	WriteAfterExternalCondition(table string, objs ...interface{}) (store.ConditionMet, error)
 	Write(table string, value ...interface{}) error
+	WriteAndBlock(table string, value ...interface{}) (store.Transaction, error)
 }
 
 var (
@@ -103,7 +124,7 @@ func New(log logger, db UnderlyingStore) ProductStore {
 // ProductStore models the Product DB
 type ProductStore interface {
 	GetProductByID(ID uint) (*Product, error)
-	SetProducts(products ...*Product) (store.ConditionMet, error)
+	SetProducts(products ...*Product) (*ProductTransaction, error)
 }
 
 type productStore struct {
@@ -117,16 +138,23 @@ func (p *productStore) GetProductByID(ID uint) (*Product, error) {
 }
 
 // SetProducts updates the Product DB with the given products
-func (p *productStore) SetProducts(products ...*Product) (store.ConditionMet, error) {
+func (p *productStore) SetProducts(products ...*Product) (*ProductTransaction, error) {
 	objs := make([]interface{}, len(products))
 	for i, v := range products {
 		objs[i] = v
 	}
-	return p.db.WriteAfterExternalCondition(table.GetName(), objs...)
+	transaction, err := p.db.WriteAndBlock(table.GetName(), objs...)
+	if err != nil {
+		return nil, err
+	}
+	return &ProductTransaction{
+		tableName:   table.GetName(),
+		transaction: transaction,
+	}, nil
 }
 
 // checkAndReturn reads the output from the DB and returns a Product instance if no error occured.
-// This will panic if the DB does not return and error but the output is not an Product. 
+// This will panic if the DB does not return and error but the output is not an Product.
 // Intentinally left to do this as if this happens it means we have an incosistency in the DB that should be resolve immediately
 // and silent handling might mask this issue
 func checkAndReturn(raw interface{}, err error) (*Product, error) {
@@ -157,7 +185,7 @@ func (p *productLogger) GetProductByID(ID uint) (*Product, error) {
 	return product, err
 }
 
-func (p *productLogger) SetProducts(products ...*Product) (store.ConditionMet, error) {
+func (p *productLogger) SetProducts(products ...*Product) (*ProductTransaction, error) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -166,6 +194,6 @@ func (p *productLogger) SetProducts(products ...*Product) (store.ConditionMet, e
 		}
 		p.log.Debugf("Products successfully updated")
 	}()
-	condition, err := p.next.SetProducts(products...)
-	return condition, err
+	transaction, err := p.next.SetProducts(products...)
+	return transaction, err
 }

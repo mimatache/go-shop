@@ -69,15 +69,15 @@ func main() {
 
 	// Starting user API
 	userLogger := logger.WithFields(log, map[string]interface{}{"api": "users"})
-	userAPI := users.NewAPI(userLogger, versionedRouter, db)
+	users.NewAPI(userLogger, versionedRouter, db)
 
 	// Starting product API
 	productLogger := logger.WithFields(log, map[string]interface{}{"api": "products"})
-	produtsAPI := products.NewAPI(productLogger, db)
+	productsAPI := products.NewAPI(productLogger, db)
 
 	// Starting cart API
 	cartLogger := logger.WithFields(log, map[string]interface{}{"api": "cart"})
-	cart.NewAPI(cartLogger, produtsAPI, userAPI, payments.New(), db, versionedRouter, middleware.JWTAuthorization)
+	cart.NewAPI(cartLogger, productsAPI, payments.New(), db, versionedRouter, middleware.JWTAuthorization)
 
 	if err := http.ListenAndServe(fmt.Sprintf(":%s", *port), r); err != nil {
 		log.Error(err)

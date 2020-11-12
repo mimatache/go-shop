@@ -132,7 +132,7 @@ func (u *userLogger) GetPasswordFor(name string) (string, error) {
 }
 
 // checkAndReturn reads the output from the DB and returns a User instance if no error occured.
-// This will panic if the DB does not return and error but the output is not an User. 
+// This will panic if the DB does not return and error but the output is not an User.
 // Intentinally left to do this as if this happens it means we have an incosistency in the DB that should be resolve immediately
 // and silent handling might mask this issue
 func checkAndReturn(raw interface{}, err error) (*User, error) {

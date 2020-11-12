@@ -19,8 +19,8 @@ const (
 
 var (
 	item = &productStore.Product{
-		ID: productID,
-		Name: "awesome product",
+		ID:    productID,
+		Name:  "awesome product",
 		Price: 10,
 		Stock: 2,
 	}
@@ -32,7 +32,6 @@ func TestProductStore_GetProductByID(t *testing.T) {
 	g := NewWithT(t)
 
 	log, _, _ := logger.New("test", true)
-	
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -56,7 +55,6 @@ func TestProductStore_GetProductByID_NotFound(t *testing.T) {
 	g := NewWithT(t)
 
 	log, _, _ := logger.New("test", true)
-	
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -79,7 +77,6 @@ func TestProductStore_SetProducts(t *testing.T) {
 	g := NewWithT(t)
 
 	log, _, _ := logger.New("test", true)
-	
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -91,7 +88,7 @@ func TestProductStore_SetProducts(t *testing.T) {
 	mockStore.
 		EXPECT().
 		WriteAfterExternalCondition(table, item).
-		Return(func(bool) {} ,nil)
+		Return(func(bool) {}, nil)
 
 	_, err := products.SetProducts(item)
 
@@ -102,7 +99,6 @@ func TestProductStore_SetProducts_Error(t *testing.T) {
 	g := NewWithT(t)
 
 	log, _, _ := logger.New("test", true)
-	
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -114,7 +110,7 @@ func TestProductStore_SetProducts_Error(t *testing.T) {
 	mockStore.
 		EXPECT().
 		WriteAfterExternalCondition(table, item).
-		Return(nil ,fmt.Errorf("random error"))
+		Return(nil, fmt.Errorf("random error"))
 
 	_, err := products.SetProducts(item)
 

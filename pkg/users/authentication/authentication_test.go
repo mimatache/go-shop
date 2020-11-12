@@ -23,6 +23,7 @@ func TestUser_ValidCredentials(t *testing.T) {
 	g := NewWithT(t)
 
 	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 	registry := mock_authentication.NewMockUserRegistry(ctrl)
 
 	registry.
@@ -41,6 +42,7 @@ func TestUser_InvalidUsername(t *testing.T) {
 	g := NewWithT(t)
 
 	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 	registry := mock_authentication.NewMockUserRegistry(ctrl)
 
 	registry.
@@ -60,6 +62,7 @@ func TestUser_InvalidPassword(t *testing.T) {
 	g := NewWithT(t)
 
 	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 	registry := mock_authentication.NewMockUserRegistry(ctrl)
 
 	registry.

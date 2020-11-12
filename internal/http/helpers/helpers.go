@@ -10,6 +10,7 @@ type executionError struct {
 	Code  int    `json:"code"`
 }
 
+// FormatError returns an error message with the given status code
 func FormatError(w http.ResponseWriter, message string, code int) {
 	execError := &executionError{
 		Error: message,
@@ -22,5 +23,17 @@ func FormatError(w http.ResponseWriter, message string, code int) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
+	_, _ = w.Write(js)
+}
+
+// FormatResponse writes a json body to the response writter
+func FormatResponse(w http.ResponseWriter, value interface{}){
+	js, err := json.Marshal(value)
+	if err != nil {
+		FormatError(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
 	_, _ = w.Write(js)
 }

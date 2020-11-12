@@ -21,3 +21,6 @@ install-go-tools:
 
 lint:
 	golangci-lint run ./...
+
+generate:
+	go generate -v ./...
