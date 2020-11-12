@@ -22,7 +22,7 @@ func (e errors) Error() string {
 type InventoryAPI interface {
 	// Check if product is in sufficient stock
 	HasInStock(productID uint, quantity uint) (bool, error)
-	// GetPrice returns the price of an item 
+	// GetPrice returns the price of an item
 	GetPrice(productID uint) (uint, error)
 	// Renove from stock removes items from stock, but restores the previous values of False is sent over the commitChan
 	RemoveFromStock(items map[uint]uint, commitChan <-chan bool, errorChan chan<- error) error
@@ -82,11 +82,14 @@ func (c *Cart) Checkout(userID string) (*Contents, error) {
 	errChan := make(chan error)
 	commitChan := make(chan bool)
 
+	defer close(errChan)
+	defer close(commitChan)
+
 	err = c.inventory.RemoveFromStock(items, commitChan, errChan)
 	if err != nil {
 		return nil, err
 	}
-	errs := errors{} 
+	errs := errors{}
 	err = c.payments.MakePayment(userID, cost)
 	if err != nil {
 		commitChan <- false
@@ -95,8 +98,6 @@ func (c *Cart) Checkout(userID string) (*Contents, error) {
 		commitChan <- true
 	}
 	err = <-errChan
-	close(errChan)
-	close(commitChan)
 	if err != nil {
 		errs = append(errs, err)
 	}
@@ -110,7 +111,7 @@ func (c *Cart) Checkout(userID string) (*Contents, error) {
 		return nil, err
 	}
 	return cartContents, err
-} 
+}
 
 // AddProductToCart adds a bew product to the cart (or updates the existing item quantity if some already present)
 func (c *Cart) AddProductToCart(userID string, prod Product) (*Contents, error) {
@@ -120,20 +121,20 @@ func (c *Cart) AddProductToCart(userID string, prod Product) (*Contents, error) 
 		return nil, err
 	}
 	quantity := currentProducts[prod.ID]
-		
-	hasStock, err := c.inventory.HasInStock(prod.ID, quantity + prod.Quantity)
+
+	hasStock, err := c.inventory.HasInStock(prod.ID, quantity+prod.Quantity)
 	if err != nil {
 		return nil, err
 	}
 	if !hasStock {
 		return nil, fmt.Errorf("Insuficient stock")
 	}
-	
+
 	_, err = c.cartContents.AddProduct(userID, prod.ID, prod.Quantity)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	currentContents, err := c.getContents(userID)
 	if err != nil {
 		return nil, err

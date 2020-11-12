@@ -114,7 +114,6 @@ func (c *cartStore) GetProductsForUser(userID string) (map[uint]uint, error) {
 	return cart.Products, nil
 }
 
-
 func (c *cartStore) getProductsForUser(userID string) (*CartItem, error) {
 	item, err := c.db.Read(table.GetName(), id, userID)
 	if err != nil {
@@ -123,7 +122,6 @@ func (c *cartStore) getProductsForUser(userID string) (*CartItem, error) {
 	cartItem := item.(*CartItem)
 	return cartItem, nil
 }
-
 
 type cartLogger struct {
 	log  logger

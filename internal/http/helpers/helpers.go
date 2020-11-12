@@ -27,7 +27,7 @@ func FormatError(w http.ResponseWriter, message string, code int) {
 }
 
 // FormatResponse writes a json body to the response writter
-func FormatResponse(w http.ResponseWriter, value interface{}){
+func FormatResponse(w http.ResponseWriter, value interface{}) {
 	js, err := json.Marshal(value)
 	if err != nil {
 		FormatError(w, err.Error(), http.StatusInternalServerError)

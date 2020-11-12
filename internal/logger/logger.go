@@ -16,6 +16,7 @@ type Logger interface {
 	Error(args ...interface{})
 	Errorf(msg string, args ...interface{})
 	Errorw(msg string, keysAndValues ...interface{})
+	Fatal(args ...interface{})
 }
 
 // New returns a new Logger instance with the desired fields

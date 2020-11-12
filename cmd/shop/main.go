@@ -1,13 +1,17 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
+	"time"
 
 	"github.com/gorilla/mux"
 
+	"github.com/mimatache/go-shop/internal/http/authorization"
 	"github.com/mimatache/go-shop/internal/http/middleware"
 	"github.com/mimatache/go-shop/internal/logger"
 	"github.com/mimatache/go-shop/internal/store"
@@ -28,6 +32,13 @@ var (
 
 func main() {
 
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, )
+
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, 5 * time.Second)
+	defer cancel()
+
 	log, flush, err := logger.New("shop", true)
 	if err != nil {
 		fmt.Printf("Could not instantiate logger %v", err)
@@ -35,6 +46,7 @@ func main() {
 	}
 	defer flush()
 
+	authorization.CleanBlacklist(ctx, 60)
 	// Reading seed files
 	readFlagValues(log)
 
@@ -51,20 +63,17 @@ func main() {
 	schema.AddToSchema(cartStore.GetTable())
 	db, err := store.New(schema)
 	if err != nil {
-		log.Errorf("could not start DB %v", err)
-		os.Exit(1)
+		log.Fatal(fmt.Sprintf("could not start DB %v", err))
 	}
 
 	// Loading the seeds to the DB
 	err = userStore.LoadSeeds(userSeeds, db)
 	if err != nil {
-		log.Errorf("could not load seeds for user to DB %v", err)
-		os.Exit(1)
+		log.Fatal(fmt.Sprintf("could not load seeds for user to DB %v", err))
 	}
 	err = productsStore.LoadSeeds(productSeeds, db)
 	if err != nil {
-		log.Errorf("could not load seeds for product to DB %v", err)
-		os.Exit(1)
+		log.Fatal(fmt.Sprintf("could not load seeds for product to DB %v", err))
 	}
 
 	// Starting user API
@@ -79,9 +88,20 @@ func main() {
 	cartLogger := logger.WithFields(log, map[string]interface{}{"api": "cart"})
 	cart.NewAPI(cartLogger, productsAPI, payments.New(), db, versionedRouter, middleware.JWTAuthorization)
 
-	if err := http.ListenAndServe(fmt.Sprintf(":%s", *port), r); err != nil {
-		log.Error(err)
+	srv := &http.Server{
+		Addr: fmt.Sprintf(":%s", *port),
+		Handler: r,
 	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+
+	<-c
+	log.Info("Shutting down...")
+	srv.Shutdown(ctx)
 }
 
 func readFlagValues(log logger.Logger) {
