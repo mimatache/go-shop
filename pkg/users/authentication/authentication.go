@@ -36,7 +36,7 @@ func NewInvalidCredentials(username string) error {
 	return invalidCredentials{msg: fmt.Sprintf("invalid credentials for %s", username)}
 }
 
-//New creates a new User instance
+// New creates a new User instance
 func New(storage UserRegistry) *User {
 	return &User{storage}
 }
@@ -62,6 +62,6 @@ func (u *User) IsValid(username, password string) error {
 }
 
 // Deprecated: do not use this
-func (u *User) GetEmailForUser(ID uint) (string, error) {
+func (u *User) GetEmailForUser(id uint) (string, error) {
 	return "", fmt.Errorf("not implemented")
 }

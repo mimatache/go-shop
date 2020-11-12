@@ -54,9 +54,13 @@ func New(app string, debug bool) (Logger, func() error, error) {
 
 // WithFields adds fields to the provided logger instance
 func WithFields(log Logger, fields map[string]interface{}) Logger {
-	var args []interface{}
+	args := make([]interface{}, len(fields)*2)
+	i := 0
 	for k, v := range fields {
-		args = append(args, k, v)
+		args[i] = k
+		i++
+		args[i] = v
+		i++
 	}
 	return log.(*zap.SugaredLogger).With(args...)
 }

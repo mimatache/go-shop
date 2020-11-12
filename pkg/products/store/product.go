@@ -38,20 +38,20 @@ func (p *Product) GetStock() uint {
 	return p.Stock
 }
 
-// HasStock returns true is the stock is higher or equal to the requeted ammount
+// HasStock returns true is the stock is higher or equal to the requeted amount
 func (p *Product) HasStock(quantity uint) bool {
 	return p.Stock >= quantity
 }
 
-// IncreaseStock adds the given quantitty to the stock o
+// IncreaseStock adds the given quantity to the stock o
 func (p *Product) IncreaseStock(quantity uint) {
 	p.Stock += quantity
 }
 
 // DecreaseStock decreases the quantity of an item if sufficient
-func (p *Product) DecreaseStock(quantitty uint) error {
-	if p.HasStock(quantitty) {
-		p.Stock -= quantitty
+func (p *Product) DecreaseStock(quantity uint) error {
+	if p.HasStock(quantity) {
+		p.Stock -= quantity
 		return nil
 	}
 	return fmt.Errorf("insuficient stock of %s", p.Name)
@@ -61,14 +61,13 @@ func (p *Product) DecreaseStock(quantitty uint) error {
 func (p *Product) Validate() error {
 	var errs errors
 	if p.ID == 0 {
-		errs = append(errs, fmt.Errorf("Product ID cannot be 0"))
+		errs = append(errs, fmt.Errorf("product ID cannot be 0"))
 	}
 	if p.Name == "" {
-		errs = append(errs, fmt.Errorf("Name is mandatory"))
+		errs = append(errs, fmt.Errorf("name is mandatory"))
 	}
 	if len(errs) > 0 {
 		return errs
 	}
 	return nil
-
 }

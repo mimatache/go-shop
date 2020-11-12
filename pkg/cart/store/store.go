@@ -22,7 +22,7 @@ func GetTable() *ShoppingCartTable {
 	return table
 }
 
-//ShoppingCartTable the shopping cart table schema
+// ShoppingCartTable the shopping cart table schema
 type ShoppingCartTable struct {
 	name string
 }
@@ -37,12 +37,12 @@ func (u *ShoppingCartTable) GetTableSchema() *memdb.TableSchema {
 	return &memdb.TableSchema{
 		Name: u.name,
 		Indexes: map[string]*memdb.IndexSchema{
-			"id": &memdb.IndexSchema{
+			"id": {
 				Name:    "id",
 				Unique:  true,
 				Indexer: &memdb.StringFieldIndex{Field: "ID"},
 			},
-			"products": &memdb.IndexSchema{
+			"products": {
 				Name:    "products",
 				Unique:  false,
 				Indexer: &memdb.StringMapFieldIndex{Field: "Products"},

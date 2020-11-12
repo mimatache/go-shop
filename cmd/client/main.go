@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-
 	port := flag.String("port", "9090", "Port of server")
 
 	flag.Parse()

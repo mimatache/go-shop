@@ -21,8 +21,8 @@ var blackListedTokens = map[string]struct{}{}
 func CleanBlacklist(cleanInterval time.Duration) {
 	go func() {
 		timer := time.NewTimer(cleanInterval)
-		for range timer.C{
-				clearExpiredFromBlacklist()
+		for range timer.C {
+			clearExpiredFromBlacklist()
 		}
 	}()
 }

@@ -26,8 +26,8 @@ type Inventory struct {
 }
 
 // GetProductStock returns the stock of a item given the ID
-func (i *Inventory) GetProductStock(ID uint) (uint, error) {
-	product, err := i.stock.GetProductByID(ID)
+func (i *Inventory) GetProductStock(id uint) (uint, error) {
+	product, err := i.stock.GetProductByID(id)
 	if err != nil {
 		return 0, err
 	}
@@ -35,8 +35,8 @@ func (i *Inventory) GetProductStock(ID uint) (uint, error) {
 }
 
 // HasInStock check if enough stock of a product is still present
-func (i *Inventory) HasInStock(ID uint, quantity uint) (bool, error) {
-	val, err := i.GetProductStock(ID)
+func (i *Inventory) HasInStock(id uint, quantity uint) (bool, error) {
+	val, err := i.GetProductStock(id)
 	if err != nil {
 		return false, err
 	}
@@ -53,7 +53,7 @@ func (i *Inventory) GetPrice(productID uint) (uint, error) {
 }
 
 // RemoveFromStock removes the requested quantity for each product from stock
-// Blocks untill the stock is verified as suficient. Blocks writing to store until the condition is met
+// Blocks until the stock is verified as suficient. Blocks writing to store until the condition is met
 func (i *Inventory) RemoveFromStock(items map[uint]uint, commitChan <-chan bool, errorChan chan<- error) error {
 	i.Lock()
 	defer i.Unlock()
@@ -79,8 +79,8 @@ func (i *Inventory) RemoveFromStock(items map[uint]uint, commitChan <-chan bool,
 	go func() {
 		commit := <-commitChan
 		if !commit {
-			for _, v := range previousProducts {
-				err := transaction.Write(&v)
+			for i := range previousProducts {
+				err := transaction.Write(&previousProducts[i])
 				if err != nil {
 					transaction.Abort()
 					errorChan <- err
