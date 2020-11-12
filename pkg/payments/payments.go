@@ -1,11 +1,11 @@
 package payments
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
-	"crypto/rand"
 )
 
 type Luke struct {
@@ -35,15 +35,15 @@ func (a *API) MakePayment(user string, money uint) error {
 		luke.Name = "Darth Vader"
 	}
 	if (randomNumber() % 2) == 0 {
-		return fmt.Errorf("request blocked by %s", luke.Name)
+		return fmt.Errorf("request blocked by %s. don't spend %d", luke.Name, money)
 	}
 	return nil
 }
 
 func randomNumber() int {
 	b := make([]byte, 1)
-	_, err := rand.Read(b) 
-	if err != nil{
+	_, err := rand.Read(b)
+	if err != nil {
 		return 1
 	}
 	return int(b[0])

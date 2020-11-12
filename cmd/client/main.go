@@ -1,9 +1,9 @@
 package main
 
-import(
-	"sync"
+import (
 	"flag"
 	"fmt"
+	"sync"
 
 	"github.com/mimatache/go-shop/pkg/client"
 )
@@ -30,9 +30,9 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(len(clients))
 	for _, customer := range clients {
-		go func (customer *client.ShopClient){
+		go func(customer *client.ShopClient) {
 			defer wg.Done()
-			err := customer.PerformActionLoop(map[uint]uint{1:2, 2:1})
+			err := customer.PerformActionLoop(map[uint]uint{1: 2, 2: 1})
 			if err != nil {
 				fmt.Printf("user %s failed the buy: %v \n", customer.Name, err)
 				return

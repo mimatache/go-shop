@@ -5,8 +5,11 @@ import (
 	"github.com/hashicorp/go-memdb"
 )
 
-type ConditionMet func(write bool)
-
+type Transaction interface {
+	Commit()
+	Abort()
+	Insert(table string, value interface{}) error
+}
 
 type NotFound struct {
 	Msg string
@@ -16,89 +19,79 @@ func (u NotFound) Error() string {
 	return u.Msg
 }
 
-type Store interface {
-	Write(table Table, obj ...interface{}) error
-	WriteAfterExternalCondition(table Table, objs ...interface{}) (ConditionMet, error)
-	Read(table Table, key string, value interface{}) (interface{}, error)
-	ReadAll(table Table, key string, value interface{}) ([]interface{}, error)
-	Remove(table Table, key string, value interface{}) error
+// NewNotFoundError return a not found error for the given input
+func NewNotFoundError(tableName string, key string, value interface{}) error {
+	return NotFound{fmt.Sprintf("could not find %s with %s equal to %v", tableName, key, value)}
 }
 
-func New(schema Schema) (Store, error) {
+// IsNotFoundError checks if an error is of type notFound
+func IsNotFoundError(err error) bool {
+	switch err.(type) {
+	case NotFound:
+		return true
+	default:
+		return false
+	}
+}
+
+// New createa a new Store with the given schema
+func New(schema Schema) (*Store, error) {
 	db, err := schema.initDB()
 	if err != nil {
 		return nil, err
 	}
-	return &store{db: db}, nil
+	return &Store{db: db}, nil
 }
 
-type store struct {
+// Store is used to connect to the database
+type Store struct {
 	db *memdb.MemDB
 }
 
-func (s *store) Write(table Table, objs ...interface{}) error {
-	finalizer, err := s.WriteAfterExternalCondition(table, objs...)
-	if err != nil {
-		return err
+// Write inserts a row into the table
+func (s *Store) Write(table string, objs ...interface{}) error {
+	txn := s.db.Txn(true)
+	for _, obj := range objs {
+		if err := txn.Insert(table, obj); err != nil {
+			txn.Abort()
+			return err
+		}
 	}
-	finalizer(true)
+	txn.Commit()
 	return nil
 }
 
-func (s *store) WriteAfterExternalCondition(table Table, objs ...interface{}) (ConditionMet, error) {
+// WriteAndBlock writes to the store but block any other writing until the returned function is called
+func (s *Store) WriteAndBlock(table string, objs ...interface{}) (Transaction, error) {
 	txn := s.db.Txn(true)
-	shouldCommit := s.shouldCommit(txn, s.db.Snapshot())
 	for _, obj := range objs {
-		if err := txn.Insert(table.GetName(), obj); err != nil {
+		if err := txn.Insert(table, obj); err != nil {
 			txn.Abort()
 			return nil, err
 		}
 	}
-	return shouldCommit, nil
+	return txn, nil
 }
 
-func (s *store) Read(table Table, key string, value interface{}) (interface{}, error) {
+// Read returns a row from a DB table
+func (s *Store) Read(table string, key string, value interface{}) (interface{}, error) {
 	txn := s.db.Txn(false)
-	raw, err := txn.First(table.GetName(), key, value)
+	raw, err := txn.First(table, key, value)
 
 	if raw == nil {
-		return nil, NotFound{fmt.Sprintf("could not find %s with %s equal to %v", table.GetName(), key, value)}
+		return nil, NewNotFoundError(table, key, value)
 	}
 	return raw, err
 }
 
-func (s *store) ReadAll(table Table, key string, value interface{}) ([]interface{}, error) {
-	txn := s.db.Txn(false)
-	it, err := txn.Get(table.GetName(), key, value)
-	if err != nil {
-		return nil, err
-	}
-	items := []interface{}{}
-	for obj := it.Next(); obj != nil; obj = it.Next() {
-		items = append(items, obj)
-	}
-	return items, nil
-}
-
-func (s *store) Remove(table Table, key string, value interface{}) error {
+// Remove removes a row from the DB table
+func (s *Store) Remove(table string, key string, value interface{}) error {
 	txn := s.db.Txn(true)
-	_, err := txn.DeleteAll(table.GetName(), key, value)
+	_, err := txn.DeleteAll(table, key, value)
 	if err != nil {
 		txn.Abort()
 		return err
 	}
 	txn.Commit()
 	return nil
-}
-
-
-func (s *store) shouldCommit(txn *memdb.Txn, db *memdb.MemDB) ConditionMet {
-	return func(write bool) {
-		if write {
-			txn.Commit()
-		} else {
-			txn.Abort()
-			s.db = db
-		}
-	}
 }

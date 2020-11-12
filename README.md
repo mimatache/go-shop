@@ -2,13 +2,23 @@
 A simple web shop API written in go
 
 
-**Things to do**
-- Testing - add unit tests
-- Comments - add more comments
-- Refactor - part of the code is more coupled than I would like
 
 **Usage**
 You can run a `make` to lint and build the images
+
+To start the server on port `8080` use:
+```sh
+PORT=8080 make run-server
+```
+> :warning: This command blocks. You need to run it in the backgournd of you intend to continue using this terminal session while still having the server running
+
+To start the client on port `8080` use:
+```sh
+PORT=8080 make run-client
+```
+
+If the port is not given, then both client and server start by default on port `9090`.
+
 
 **API**
 

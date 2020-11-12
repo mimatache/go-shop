@@ -21,13 +21,13 @@ type Validatable interface {
 }
 
 type CartItem struct {
-	ID       uint          `json:"id"`
+	ID       string        `json:"id"`
 	Products map[uint]uint `json:"products"`
 }
 
 func (c CartItem) Validate() error {
 	var errs errors
-	if c.ID == 0 {
+	if c.ID == "" {
 		errs = append(errs, fmt.Errorf("User ID cannot be 0"))
 	}
 	if len(errs) > 0 {
@@ -36,7 +36,7 @@ func (c CartItem) Validate() error {
 	return nil
 }
 
-func NewCartItem(user uint, product uint, quantity uint) (*CartItem, error) {
+func NewCartItem(user string, product uint, quantity uint) (*CartItem, error) {
 	c := CartItem{
 		ID:       user,
 		Products: map[uint]uint{product: quantity},
