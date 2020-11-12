@@ -87,8 +87,8 @@ func TestProductStore_SetProducts(t *testing.T) {
 
 	mockStore.
 		EXPECT().
-		WriteAfterExternalCondition(table, item).
-		Return(func(bool) {}, nil)
+		WriteAndBlock(table, item).
+		Return(nil, nil)
 
 	_, err := products.SetProducts(item)
 
@@ -109,7 +109,7 @@ func TestProductStore_SetProducts_Error(t *testing.T) {
 
 	mockStore.
 		EXPECT().
-		WriteAfterExternalCondition(table, item).
+		WriteAndBlock(table, item).
 		Return(nil, fmt.Errorf("random error"))
 
 	_, err := products.SetProducts(item)
