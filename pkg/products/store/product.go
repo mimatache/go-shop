@@ -48,6 +48,7 @@ func (p *Product) IncreaseStock(quantity uint) {
 	p.Stock += quantity
 }
 
+// DecreaseStock decreases the quantity of an item if sufficient
 func (p *Product) DecreaseStock(quantitty uint) error {
 	if p.HasStock(quantitty) {
 		p.Stock -= quantitty
