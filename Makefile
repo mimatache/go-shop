@@ -1,7 +1,7 @@
 SHELL:=/bin/bash
 TOP_DIR:=$(notdir $(CURDIR))
 BUILD_DIR:=_build
-SERVER_PORT?=9090
+PORT?=9090
 
 all: install-go-tools lint run-test build
 
@@ -27,7 +27,7 @@ generate:
 	go generate -v ./...
 
 run-server: build-shop
-	$(BUILD_DIR)/shop -port $(SERVER_PORT)
+	$(BUILD_DIR)/shop -port $(PORT)
 
 run-client: build-client
-	$(BUILD_DIR)/client -port $(SERVER_PORT)
+	$(BUILD_DIR)/client -port $(PORT)
