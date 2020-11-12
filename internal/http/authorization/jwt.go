@@ -1,7 +1,6 @@
 package authorization
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -19,16 +18,11 @@ const (
 var blackListedTokens = map[string]struct{}{}
 
 // CleanBlacklist starts a go routine that periodically clears the black list
-func CleanBlacklist(ctx context.Context, loopInterval int) {
+func CleanBlacklist(cleanInterval time.Duration) {
 	go func() {
-		timer := time.NewTimer(time.Minute * time.Duration(loopInterval))
-		for {
-			select {
-			case <-timer.C:
+		timer := time.NewTimer(cleanInterval)
+		for range timer.C{
 				clearExpiredFromBlacklist()
-			case <-ctx.Done():
-				return
-			}
 		}
 	}()
 }

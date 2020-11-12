@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -33,10 +34,10 @@ var (
 func main() {
 
 	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, )
+	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, 5 * time.Second)
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	log, flush, err := logger.New("shop", true)
@@ -46,7 +47,7 @@ func main() {
 	}
 	defer flush()
 
-	authorization.CleanBlacklist(ctx, 60)
+	authorization.CleanBlacklist(time.Duration(5) * time.Second)
 	// Reading seed files
 	readFlagValues(log)
 
@@ -101,6 +102,8 @@ func main() {
 
 	<-c
 	log.Info("Shutting down...")
+	ctx, cancel = context.WithTimeout(ctx, time.Second * 5)
+	defer cancel()
 	srv.Shutdown(ctx)
 }
 
