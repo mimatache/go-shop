@@ -1,5 +1,10 @@
+
 # go-shop
 A simple web shop API written in go
+
+**Badges**:
+
+[![Go Report Card](https://goreportcard.com/badge/github.com/mimatache/go-shop)](https://goreportcard.com/report/github.com/mimatache/go-shop) [![Actions Status](https://github.com/mimatache/go-shop/workflows/To%20Master/badge.svg)](https://github.com/mimatache/go-shop/actions)
 
 
 
