@@ -19,9 +19,9 @@ type Condition struct {
 }
 
 type status struct {
-	App      string     `json:"app"`
-	Instance string 	`json:"instance"`
-	Status   []Condition   `json:"status,omitempty"`
+	App      string      `json:"app"`
+	Instance string      `json:"instance"`
+	Status   []Condition `json:"status,omitempty"`
 }
 
 func alwaysGood() Condition {
@@ -60,9 +60,8 @@ func (h *Check) RegisterReadynessCondition(condition ConditionCheck) {
 	h.readyConditions = append(h.readyConditions, condition)
 }
 
-
 // AddHandlersTo add the liveness, readiness and info handlers to the router
-func (h *Check) AddHandlersTo(router *mux.Router){
+func (h *Check) AddHandlersTo(router *mux.Router) {
 	r := router.PathPrefix("/info").Subrouter()
 	r.HandleFunc("/alive", h.livenessHandler)
 	r.HandleFunc("/ready", h.readinessHandler)
@@ -79,7 +78,7 @@ func (h *Check) readinessHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Check) aboutHandler(w http.ResponseWriter, r *http.Request) {
-	helpers.FormatResponse(w, &status{App:h.app, Instance: h.instance}, http.StatusOK)
+	helpers.FormatResponse(w, &status{App: h.app, Instance: h.instance}, http.StatusOK)
 }
 
 func (h *Check) conditionHandler(w http.ResponseWriter, conditions []ConditionCheck) {
