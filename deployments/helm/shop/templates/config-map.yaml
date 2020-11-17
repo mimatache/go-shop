@@ -1,0 +1,46 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: seeds
+  namespace: {{.Values.namespace}}
+data:
+  users2.json: |
+    [
+        {
+            "ID": 1,
+            "Name": "John Doe",
+            "Password": "1234",
+            "Email": "john.doe@company.com"
+        },
+        {
+            "ID": 2,
+            "Name": "John Doe 2",
+            "Password": "1234",
+            "Email": "john.doe2@company.com"
+        }
+    ]
+  products2.json: |
+    [
+        {
+            "ID": 1,
+            "Name": "Product 1",
+            "Price": 100,
+            "Stock": 2
+        },
+        {
+            "ID": 2,
+            "Name": "Product 2",
+            "Price": 200,
+            "Stock": 3
+        }
+    ]
+
+---
+
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: product-seeds
+  namespace: {{.Values.namespace}}
+data:
+  

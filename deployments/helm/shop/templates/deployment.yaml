@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+  namespace: {{.Release.Namespace}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port}}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /info/alive
+              port: {{ .Values.service.port}}
+            initialDelaySeconds: 10
+            timeoutSeconds: 1
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /info/ready
+              port: {{ .Values.service.port}}
+            initialDelaySeconds: 20
+            timeoutSeconds: 3
+            periodSeconds: 20
+            failureThreshold: 3
+          volumeMounts:
+            - mountPath: /etc/data/users2.json
+              subPath: users2.json
+              name: seeds
+            - mountPath: /etc/data/products2.json
+              subPath: products2.json
+              name: seeds
+          env:
+            - name: PORT
+              value: {{ .Values.service.port | quote }}
+            - name: USERS
+              value: /etc/data/users2.json
+            - name: PRODUCTS
+              value: /etc/data/products2.json
+      volumes:
+        - name: seeds
+          configMap:
+            name: seeds
