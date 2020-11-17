@@ -42,7 +42,7 @@ func NewAPI(app string, instance string) *Check {
 	}
 }
 
-//Check implements the Check interface
+// Check implements the API for readiness and healt
 type Check struct {
 	app              string
 	instance         string
