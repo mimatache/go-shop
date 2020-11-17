@@ -70,7 +70,6 @@ func (h *Check) AddHandlersTo(router *mux.Router) {
 
 func (h *Check) livenessHandler(w http.ResponseWriter, r *http.Request) {
 	h.conditionHandler(w, h.healthConditions)
-
 }
 
 func (h *Check) readinessHandler(w http.ResponseWriter, r *http.Request) {
