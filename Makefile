@@ -5,6 +5,7 @@ BIN_DIR:=$(BUILD_DIR)/_bin
 PORT?=9090
 DOCKER_REPO?="matache91mh"
 SHOP_IMAGE?=$(DOCKER_REPO)/"go-shop"
+APP:=shop
 
 ifeq ($(VERSION),)
 	VERSION:=$(shell git describe --tags --dirty --always)
@@ -49,3 +50,20 @@ shop-image: build-shop
 
 push-images: shop-image
 	docker push $(SHOP_IMAGE):$(VERSION)
+
+helm-install:
+	helm install --set image.tag=$(VERSION) --replace shop ./deployments/helm/shop
+
+helm-uninstall:
+	helm uninstall shop
+
+kind-create-cluster: 
+	kind create cluster --name shop-test
+
+kind-load-image:
+	kind load docker-image $(SHOP_IMAGE):$(VERSION) --name shop-test
+
+setup-kind: shop-image kind-create-cluster kind-load-image helm-install
+
+kind-delete-cluster:
+	kind delete cluster --name shop-test
