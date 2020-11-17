@@ -42,7 +42,7 @@ func (s *ShoppingCart) addProductToCart(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	helpers.FormatResponse(w, currentContents)
+	helpers.FormatResponse(w, currentContents, http.StatusOK)
 }
 
 func (s *ShoppingCart) checkout(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +57,7 @@ func (s *ShoppingCart) checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	helpers.FormatResponse(w, contents)
+	helpers.FormatResponse(w, contents, http.StatusOK)
 }
 
 // AddRoutes registers the API routes to a router

@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/mimatache/go-shop/internal/http/authorization"
+	"github.com/mimatache/go-shop/internal/http/health"
 	"github.com/mimatache/go-shop/internal/http/middleware"
 	"github.com/mimatache/go-shop/internal/logger"
 	"github.com/mimatache/go-shop/internal/store"
@@ -55,6 +56,15 @@ func main() {
 	r := mux.NewRouter()
 	r.Use(middleware.Logging(log))
 	versionedRouter := r.PathPrefix("/api/v1").Subrouter()
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Debug("HOSTNAME not found")
+		hostname = "shop"
+	}
+
+	healthProbes := health.NewAPI("shop", hostname)
+	healthProbes.AddHandlersTo(r)
 
 	// Starting DB instance
 	schema := store.NewSchema()

@@ -6,4 +6,8 @@ COPY shop /usr/bin/shop
 
 ENV PORT=9090
 
-CMD shop -port ${PORT} -users /etc/data/users.json -products /etc/data/products.json 
+ENV USERS="/etc/data/users.json"
+
+ENV PRODUCTS="/etc/data/products.json"
+
+CMD shop -port ${PORT} -users ${USERS} -products ${PRODUCTS}
